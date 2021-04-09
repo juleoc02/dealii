@@ -2,7 +2,7 @@
 <h1>Introduction</h1>
 
 \chapter{Introduction}
-Topology Optimization of Elastic Media is a technique used to optimize a structure that is bearing some load. Ideally, we would like to minimize the maximum stress placed on a structure by selecting a region $E$ where material is placed. 
+Topology Optimization of Elastic Media is a technique used to optimize a structure that is bearing some load. Ideally, we would like to minimize the maximum stress placed on a structure by selecting a region $E$ where material is placed.
 In other words,
 \[\text{Minimize}\norm{\sigma (\textbf{u}) }_\infty\]
 \[\text{subject to } |E|\leq V_{\max},\]
@@ -15,7 +15,7 @@ That said, the infinity norm above creates a problem: As a function of location 
 \[\text{subject to } \norm{E}\leq V_{\max}\]
 \[\text{and } \nabla \cdot \sigma + \textbf{F} = 0\]
 
-The value of the objective function is calculated using a finite element method, where the solution is the displacements. This is placed inside of a nonlinear solver loop that solves for a vector denoting placement of material. 
+The value of the objective function is calculated using a finite element method, where the solution is the displacements. This is placed inside of a nonlinear solver loop that solves for a vector denoting placement of material.
 
 \section{Solid Isotropic Material with Penalization}
 
@@ -52,7 +52,7 @@ Furthermore, we will make the assumption that the material is linear isotropic, 
 \]
 \[\sigma_{i,j} = \rho^p (\lambda  \epsilon_{k,k} \delta_{i,j} + 2 \mu \epsilon_{i,j})\]
 see step-8 for how this transformation works.
- 
+
  Integrating the objective function by parts, along with using the elasticity equation constraint, gives a simplification of the objective problem as follows:
 
 \[\int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) + \int_\Omega (\nabla \cdot \sigma(\rho)) \cdot \textbf{u} = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}\]
@@ -63,7 +63,7 @@ Because we are assuming no internal forces, this simplifies all the way to
 
 \[\int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}\]
 
- 
+
  \section{Making the solution mesh-independent}
 
 Typically, the solutions to topology optimization problems are not mesh-independent, and as such the problem is ill-posed. This is because as the mesh is refined further, fractal structures are often formed. As the mesh gains resolution, the optimal solution typically gains smaller and smaller structures. There are a few competing work-arounds to this issue, but the most popular for first order optimization is the sensitivity filter, while second order optimization methods tend to prefer use of a density filter.
@@ -72,7 +72,7 @@ As the filters affect the gradient and Hessian of the compliance (i.e., the obje
 \[ \rho = H(\sigma). \]
 Here, $H$ is an operator so that $\rho(\mathbf x)$ is some kind of average of the values of $\sigma$ in the area around $\mathbf x$ -- i.e., it is a smoothed version of $\sigma$.
 This prevents checkerboarding; the radius of the filter allows the user to define an effective minimal beam width for the optimal structures we seek to find.
- 
+
 \section{Complete Problem Formulation}
 
 The minimization problem is now
@@ -124,11 +124,11 @@ $d_{\{\cdot\}}$ is a test function that is naturally paired with the $\{\cdot\}$
     \[\int_\Omega d_{z_1}(\sigma - s_1) = 0\;\;\forall d_{z_1}\]
     \[\int_\Omega d_{z_z}(1-\sigma-s_2) = 0\;\;\forall d_{z_2}\]
     \[\int_\Omega d_{y_2}(\rho - H(\sigma)) = 0\;\;\forall d_{y_2}\]
-    
+
 \item Complementary Slackness:
     \[\int_\Omega d_{s_1}(s_1z_1 - \alpha) = 0 \;\;\forall d_{s_1} ,\;\;\; \alpha \to 0\]
     \[\int_\Omega d_{s_2}(s_2z_2 - \alpha) = 0  \;\;\forall d_{s_2} ,\;\;\; \alpha \to 0\]
-    
+
 \item Dual Feasibility:
     \[s_{1,i},s_{2,i},z_{1,i},z_{2,i} \geq 0 \;\;\;\; \forall i\]
 
@@ -162,19 +162,19 @@ Equation 3
 \[ =-\int_\Omega \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla \cdot \textbf{u} + \mu  \varepsilon(\textbf{u}) \varepsilon(\textbf{d}_{\textbf{y}_1})]  + \int_\Gamma  \textbf{d}_{\textbf{y}_1} \cdot \textbf{f} \]
 \\Equation 4
     \[-\int_\Omega d_{z_1}(c_\sigma - c_{s_1})=\int_\Omega d_{z_1} (\sigma - s_1)\]
-    
+
     Equation 5
     \[-\int_\Omega d_{z_2}(-c_\sigma-c_{s_2}) = \int_\Omega d_{z_2} (1-\sigma-s_2)\]
-    
+
     Equation 6
     \[-\int_\Omega   d_{y_2}(c_\rho - H(c_\sigma))=\int_\Omega d_{y_2}(\rho - H(\sigma))\]
     \item Complementary Slackness - these equations essentially ensure the barrier is met - in the actual solution, we need $s^T z = 0$
     Equation 7
     \[\int_\Omega d_{s_1}(c_{s_1}z_1/s_1 +  c_{z_1} )=-\int_\Omega d_{s_1}(z_1 - \alpha/s_1) ,\;\;\; \alpha \to 0\]
-    
+
     Equation 8
     \[\int_\Omega d_{s_2} (c_{s_2}z_2/s_2 + c_{z_2} )=-\int_\Omega d_{s_2} (z_2 - \alpha/s_2) ,\;\;\; \alpha \to 0\]
-    
+
     Dual Feasibility - Multiplier on slacks and slack variables must be kept greater than 0. (This is the only part not implemented in the "assemble\_block\_system()" function)
     \[s,z \geq 0\]
 
@@ -203,7 +203,7 @@ Set initial guess $\textbf{x}_0, \textbf{y}_0$ \\
   {
   \For{$i = 0$ to $\hat{t}$ - typically 5 or 8}
   {Compute step $\Delta \textbf{x}_{k+i}$, $\Delta \textbf{y}_{k+i}$ with Newton's Method \\
-  Compute maximal feasible step $\beta^\textbf{x}_{k+i}, \beta^\textbf{y}_{k+i}$ 
+  Compute maximal feasible step $\beta^\textbf{x}_{k+i}, \beta^\textbf{y}_{k+i}$
   Compute $\textbf{x}_{k+i+1}=\textbf{x}_{k+i} + \beta^\textbf{x}_{k+i} \Delta \textbf{x}_{k+i}$ and $\textbf{y}_{k+i+1}=\textbf{y}_{k+i} + \beta^\textbf{y}_{k+i} \Delta \textbf{y}_{k+i}$ \\
   \If{$\phi(\textbf{x}_{k+i+1},\textbf{y}_{k+i+1}) < \phi(\textbf{x}_k,\textbf{y}_k) + \nu D(\phi(\textbf{x}_{k},\textbf{y}_k);\beta^\textbf{x}_{k} \Delta \textbf{x}_{k}, \beta^\textbf{y}_{k} \Delta \textbf{y}_{k})$ }
     {
@@ -212,10 +212,10 @@ Set initial guess $\textbf{x}_0, \textbf{y}_0$ \\
         Found Step is True \\
         Break for loop
     }
-  
+
   }
   \If{  Found Step is False}
-    {   
+    {
     Compute step $\Delta \textbf{x}_{k+i}$, $\Delta \textbf{y}_{k+i}$ with Newton's Method \\
     Compute maximal feasible step $\beta^\textbf{x}_{k+i}, \beta^\textbf{y}_{k+i}$ such that $\textbf{x}_{k+i} + \beta^\textbf{x}_{k+i} \Delta \textbf{x}_{k+i}$ and $\textbf{y}_{k+i} + \beta^\textbf{y}_{k+i} \Delta \textbf{y}_{k+i}$ maintain $s\geq 0$ and $z\geq 0$ elementwise\\
     Find $\gamma_{k+\hat{t}+1}$ so that $\phi(\textbf{x}_{k+\hat{t} +2},\textbf{y}_{k+\hat{t} +2}) \leq \phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1}) + \nu \gamma_{k+\hat{t}+1}D(\phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1});\beta^\textbf{x}_{k+\hat{t}+1} \Delta \textbf{x}_{k+\hat{t}+1}, \beta^\textbf{y}_{k+\hat{t}+1} \Delta \textbf{y}_{k+\hat{t}+1})$ \\
@@ -234,7 +234,7 @@ Set initial guess $\textbf{x}_0, \textbf{y}_0$ \\
             {Find $\gamma_{k}$ such that $\phi(\textbf{x}_{k+\hat{t}+3},\textbf{y}_{k+\hat{t}+3})\leq  \phi{\textbf{x}_k,\textbf{y}_k} + \nu \gamma_k D(\phi(\textbf{x}_{k},\textbf{y}_{k}); \beta^\textbf{x}_{k} \Delta \textbf{x}_{k}, \beta^\textbf{y}_{k} \Delta \textbf{y}_{k})$\\
             $\textbf{x}_{k+\hat{t}+3} = \textbf{x}_{k} + \gamma_{k} \beta^\textbf{x}_{k} \Delta \textbf{x}_{k} $ \\
             $\textbf{y}_{k+\hat{t}+3} = \textbf{y}_{k} + \gamma_{k} \beta^\textbf{y}_{k} \Delta \textbf{y}_{k} $
-            
+
             Accept $\textbf{x}_{k+\hat{t} +3}$, $\textbf{y}_{k+\hat{t} +3}$\\
             $k=k+\hat{t}+ 3$
             }
@@ -294,7 +294,7 @@ My use of this method is partially due to already having most of the necessary p
 
 \chapter{Results}
 \section{Test Problem}
-The algorithms used above are tested against a traditional topology optimization problem called the Messerschmitt-Bolkow-Blohm Beam (MBB Beam). 
+The algorithms used above are tested against a traditional topology optimization problem called the Messerschmitt-Bolkow-Blohm Beam (MBB Beam).
 
 This problem considers the optimal 2-d structure that can be built on a rectangle 6 units wide, and 1 unit tall. The bottom corners are fixed in place in the $y$ direction using a zero Dirichlet boundary condition, and a downward force is applied in the center of the top of the beam by enforcing a Neumann boundary condition. The rest of the boundary is allowed to move, and has no external force applied, which takes the form of a zero Neumann boundary condition. In essence, we are asking the following question: How should we design a bridge in a way so that if the bottom left and bottom right point of the bridge are on rollers that allow these points to move horizontally but not vertically, and so that the displacement in response to the vertical force in the center is minimal.
 
@@ -328,5 +328,3 @@ The results shown above took  around 75 iterations to find, which is quite conce
 The barrier decrease is most sensitive in the middle of the convergence, which is problematic, as it seems like I need it to decrease quickly, then slowly, then quickly again.
 
 Secondly, the linear solver used here is just the sparse direct solver based on the SparseDirectUMFPACK class. This works reasonably well on small problems, but the formulation of the optimization problem detailed above has quite a large number of variables and so the linear problem is not only large but also has a lot of nonzero entries in many rows, even on meshes that overall are still relatively coarse. As a consequence, the solver time dominates the computations, and more sophisticated approaches at solving the linear system are necessary.
-
-
