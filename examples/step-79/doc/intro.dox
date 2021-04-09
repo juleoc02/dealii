@@ -1,0 +1,332 @@
+<a name="Intro"></a>
+<h1>Introduction</h1>
+
+\chapter{Introduction}
+Topology Optimization of Elastic Media is a technique used to optimize a structure that is bearing some load. Ideally, we would like to minimize the maximum stress placed on a structure by selecting a region $E$ where material is placed. 
+In other words,
+\[\text{Minimize}\norm{\sigma (\textbf{u}) }_\infty\]
+\[\text{subject to } |E|\leq V_{\max},\]
+\[\text{and } \nabla \cdot \sigma +\textbf{ F} = 0.\]
+Here, $\sigma=C\varepsilon(\mathbf u)$ is the stress within the body that is caused by the external forces $\mathbf F$, where we have for simplicity assumed that the material is linear-elastic and so $C$ is the stress-strain tensor and $\varepsilon(\mathbf u)=\frac 12 (\nabla \mathbf u + \nabla\mathbf u^T)$ is the small-deformation strain as a function of the displacement $\mathbf u$ -- see step-8 and step-17 for more on linear elasticity. In the formulation above, $V_\text{max}$ is the maximal amount of material we are willing to provide to build the object. The last of the constraints is the partial differential equation that relates stress $\sigma$ and forces $\mathbf F$ and is simply the stead-state force balance.
+
+That said, the infinity norm above creates a problem: As a function of location of material, this objective function is necessarily not differentiable, making prospects of optimization rather bleak. So instead, a common approach in topology optimization is to find an approximate solution by optimizing a related problem: We would like to minimize the strain energy, or compliance. This is a measure of the potential energy stored in an object due to its deformation, but also works as a measure of total displacement over the structure.
+
+\[\text{Minimize  } \int_E \frac{1}{2}\sigma : \epsilon \]
+\[\text{subject to } \norm{E}\leq V_{\max}\]
+\[\text{and } \nabla \cdot \sigma + \textbf{F} = 0\]
+
+The value of the objective function is calculated using a finite element method, where the solution is the displacements. This is placed inside of a nonlinear solver loop that solves for a vector denoting placement of material. 
+
+\section{Solid Isotropic Material with Penalization}
+
+In actual practice, we can only build objects in which the material is either present, or not present, at any given point -- i.e., we would have an indicator function $\rho_E(\mathbf x)\in \{0,1\}$ that describes the material-filled region and that we want to find through the optimization problem. In this case, the optimization problem becomes combinatorial, and very expensive to solve. Instead, we use an approach called Solid Isotropic Material with Penalization, or SIMP \cite{Bendse2004}.
+
+The SIMP method is based off of an idea of allowing the material to exist in a location with a density $\rho$ between 0 and 1. A density of 0 suggests the material is not there, and it is not a part of the structure, while a density of 1 suggests the material is present. Values between 0 and 1 do not reflect real-world phenomena, but allow us to turn the combinatorial problem into a continuous one. One then looks at density values $\rho$, with the constraint that $0 < \rho_{\min} \leq \rho \leq 1$. The minimum value $\rho_{\min}$, typically chosen to be around $10^{-3}$, avoids the possibility of having an infinite compliance, but is small enough to provide accurate results.
+
+The straightforward application of the effect of this "density" on the elasticity of the media would be to simply multiply the stiffness tensor $C_0$ of the medium by the given density, that is, $C = \rho C_0$. However, this approach often gives optimal solutions where density values are far from both 0 and 1. As one wants to find a real-world solution, meaning the material either is present or it is not, a penalty is applied to these in-between values. A simple and effective way to do this is to multiply the stiffness tensor by the density raised to some integer power penalty parameter $p$, so that $C = \rho^p C_0$. This makes density values farther away from 0 or 1 less effective. It has been shown that using $p=3$ is sufficiently high to create 'black-and-white' solutions: that is, one gets optimal solutions in which material is either present or not present at all points.
+
+More material should always provide a less compliant structure, and so the inequality constraint can be viewed as an equality, where the total vlume used is the maximum volume.
+
+Using this density idea also allows us to reframe the volume constraint on the optimization problem. Use of SIMP then turns the optimization problem into the following:
+
+\[\text{Minimize  } \int_\Omega \frac{1}{2}\sigma(\rho) : \epsilon(\rho) \]
+\[\text{subject to } \int_\Omega \rho(x) = V_{\max},\]
+\[0<\rho_{\min}\leq \rho(x) \leq 1,\]
+\[\nabla \cdot \sigma(\rho) + \mathbf{F} = 0\]
+The final constraint, the elasticity equation, gives a method for finding $\sigma$ and $\epsilon$ given the density $\rho$.
+
+
+\section{Elasticity Equation}
+The elasticity equation in the time independent limit reads
+ \[\nabla \cdot \sigma + \textbf{F} = 0.\]
+In the situations we will care about, we will assume that the medium is linear and in that case, we have that
+\[
+  \sigma = C \varepsilon = \rho^p C_0 \varepsilon(\mathbf u)
+   = \rho^p C_0 \left[\frac 12 (\nabla \mathbf u + \nabla \mathbf u^T) \right],
+\]
+and in everything we will do below, we will always consider the displacement field $\mathbf u$ as the only solution variable, rather than considering $\mathbf u$ and $\sigma$ as solution variables (as is done in mixed formulations).
+
+Furthermore, we will make the assumption that the material is linear isotropic, in which case the stress-strain tensor can be expressed in terms of the Lam\'{e} parameters $\lambda,\mu$ such that
+\[
+  \sigma = \rho^p (\lambda tr(\epsilon) I + 2 \mu \epsilon)
+\]
+\[\sigma_{i,j} = \rho^p (\lambda  \epsilon_{k,k} \delta_{i,j} + 2 \mu \epsilon_{i,j})\]
+see step-8 for how this transformation works.
+ 
+ Integrating the objective function by parts, along with using the elasticity equation constraint, gives a simplification of the objective problem as follows:
+
+\[\int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) + \int_\Omega (\nabla \cdot \sigma(\rho)) \cdot \textbf{u} = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}\]
+
+\[\int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla u)^T) = \int_\Omega \textbf{F}\cdot \textbf{u} + \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}\]
+
+Because we are assuming no internal forces, this simplifies all the way to
+
+\[\int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}\]
+
+ 
+ \section{Making the solution mesh-independent}
+
+Typically, the solutions to topology optimization problems are not mesh-independent, and as such the problem is ill-posed. This is because as the mesh is refined further, fractal structures are often formed. As the mesh gains resolution, the optimal solution typically gains smaller and smaller structures. There are a few competing work-arounds to this issue, but the most popular for first order optimization is the sensitivity filter, while second order optimization methods tend to prefer use of a density filter.
+
+As the filters affect the gradient and Hessian of the compliance (i.e., the objective function), the choice of filter has an effect on the solution of the problem. The density filter as part of a second order method works by introducing an unfiltered density, which I refer to as $\sigma$, and then requiring that the density be a convolution of the unfiltered density:
+\[ \rho = H(\sigma). \]
+Here, $H$ is an operator so that $\rho(\mathbf x)$ is some kind of average of the values of $\sigma$ in the area around $\mathbf x$ -- i.e., it is a smoothed version of $\sigma$.
+This prevents checkerboarding; the radius of the filter allows the user to define an effective minimal beam width for the optimal structures we seek to find.
+ 
+\section{Complete Problem Formulation}
+
+The minimization problem is now
+\[\min_{\rho,\sigma,\mathbf u} \int_{\partial\Omega} \textbf{u} \cdot \textbf{t}\]
+\[\text{s.t.   } \rho = H(\sigma)\]
+ \[\int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{v}):\epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla \cdot \textbf{v} \right)  \right) = \int_{\partial \Omega} \textbf{v} \cdot \textbf{t}\]
+ \[\int_\Omega \rho = V\]
+\[0\leq \sigma \leq 1\]
+
+The inequality constraints are dealt with by first introducing slack variables, and second using a log barriers to ensure that we obtain an interior-point method. The penalty parameter is going to be $\alpha$, and the following slack variables
+\begin{enumerate}
+    \item $s_1$ - a slack variable corresponding to the lower bound
+    \item $s_2$ - a slack variable corresponding to the upper bound
+\end{enumerate}
+this now gives the following problem:
+\[\min_{\rho,\sigma,\mathbf u} \int_{\partial\Omega} \textbf{u} \cdot \textbf{f} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)\]
+\[\text{s.t.   } \rho = H(\sigma)\]
+ \[\int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{v}):\epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla \cdot \textbf{v} \right)  \right) = \int_{\partial \Omega} \textbf{v} \cdot \textbf{f}\]
+ \[\int_\Omega \rho = V\]
+\[\sigma = s_1\]
+\[1-\sigma = s_2\]
+
+
+With these variables in place, we can then follow the usual approach to solving constrained optimization problems: We introduce a Lagrangian in which we combine the objective function and the constraints by multiplying the constraints by Lagrange multipliers. Specifically, we will use the following symbols for the Lagrange multipliers for the various constraints:
+\begin{enumerate}
+    \item $\textbf y_1 $ - a Lagrange multiplier corresponding to the elasticity constraint
+    \item $y_2$ - a Lagrange multiplier corresponding to the convolution filter constraint
+    \item $z_1$ - a Lagrange multiplier corresponding to the lower slack
+    \item $z_2$ - a Lagrange multiplier corresponding to the upper slack
+\end{enumerate}
+With these variables, the Lagrangian function reads as follows:
+
+\[\mathcal{L} = \int_{\partial\Omega} \textbf{u} \cdot \textbf{f}  - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right) -  \left(\int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{y}_1):\epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla \cdot \textbf{y}_1 \right)  \right)- \int_{\partial \Omega} \textbf{y}_1 \cdot \textbf{f}\right) \]\[- y_2 (\rho - H(\sigma)) - z_1 (\sigma-s_1) - z_2 (1 - s_2 -\sigma) \]
+
+The solution of the optimization problem then needs to satisfy what are known as the Karush-Kuhn-Tucker (KKT) conditions: The derivatives of the Lagrangian with respect to all of its arguments need to be equal to zero, and because we have inequality constraints, we also have "complementarity" conditions. Since we here have an infinite-dimensional problem, these conditions all involve directional derivatives of the Lagrangian with regard to certain test functions -- in other words, all of these conditions have to be stated in weak form as is typically the basis for finite element methods anyway.
+
+The barrier method allows us to initially weaken the ``complementary slackness" as required by the typical KKT conditions. Typically, we would require that $s_i z_i = 0$, but the barrier formulations give KKT conditions where $s_i z_i = \alpha$, where $\alpha$ is our barrier parameter. As part of the barrier method, this parameter must be driven close to 0 to give a good approximation of the original problem.
+
+In the following, let us state all of these conditions where
+$d_{\{\cdot\}}$ is a test function that is naturally paired with the $\{\cdot\}$ function.
+\begin{enumerate}
+\item Stationarity:
+\[\int_\Omega  - d_\rho y_2 + p\rho^{p-1}d_\rho \left[\lambda (\nabla \cdot \textbf{y}_1) (\nabla \cdot \textbf{u}) + \mu \varepsilon(\textbf{u}):\varepsilon(\textbf{y}_1)\right]=0\;\;\forall d_\rho\]
+\[\int_\Gamma \mathbf d_\textbf{u} \cdot \textbf{f} + \int_\Omega p\rho^{p} \left[\lambda (\nabla \cdot \mathbf d_\textbf{u})( \nabla \cdot \textbf{y}_1) + \mu \varepsilon(\mathbf d_\textbf{u}):\varepsilon(\textbf{y}_1)\right]=0\;\;\forall \textbf{d}_\textbf{u}\]
+\[\int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2 = 0\;\;\forall d_\sigma\]
+
+\item Primal Feasibility:
+\[ \int_\Omega \rho^{p}\lambda (\nabla \cdot \mathbf d_{\textbf{y}_1}) (\nabla \cdot \textbf{u}) +  \rho^{p}\mu  \varepsilon(\mathbf d_{\textbf{y}_1}) : \varepsilon(\textbf{u}) - \int_\Gamma \mathbf d_{\textbf{y}_1} \cdot \textbf{f} =0 \;\;\forall \textbf{d}_{\textbf{y}_1}\]
+    \[\int_\Omega d_{z_1}(\sigma - s_1) = 0\;\;\forall d_{z_1}\]
+    \[\int_\Omega d_{z_z}(1-\sigma-s_2) = 0\;\;\forall d_{z_2}\]
+    \[\int_\Omega d_{y_2}(\rho - H(\sigma)) = 0\;\;\forall d_{y_2}\]
+    
+\item Complementary Slackness:
+    \[\int_\Omega d_{s_1}(s_1z_1 - \alpha) = 0 \;\;\forall d_{s_1} ,\;\;\; \alpha \to 0\]
+    \[\int_\Omega d_{s_2}(s_2z_2 - \alpha) = 0  \;\;\forall d_{s_2} ,\;\;\; \alpha \to 0\]
+    
+\item Dual Feasibility:
+    \[s_{1,i},s_{2,i},z_{1,i},z_{2,i} \geq 0 \;\;\;\; \forall i\]
+
+\end{enumerate}
+
+
+\section{Solution procedure}
+
+The optimality conditions above are, in addition to being convoluted, of a kind that is not easy to solve: They are generally nonlinear, and some of the relationships are also inequalities. We will address the nonlinearity using a Newton method to compute search directions, and come back to how to deal with the inequalities below when talking about step length procedures.
+
+Newton's method applied to the equations above results in the following system. Here, variational derivatives with respect to the $\{\cdot\}$ variable are taken in the $c_{\{\cdot\}}$ direction. This gives
+
+\begin{enumerate}
+\item Stationarity - these equations ensure we are at a critical point of the objective function when constrained
+
+Equation 0
+\[\int_\Omega-d_\rho c_{y_2} + p(p-1) \rho^{p-2} d_\rho c_\rho [\lambda \nabla \cdot \textbf{y}_1 \nabla \cdot \textbf{u} +  \mu  \varepsilon(\textbf{u}) \varepsilon(\textbf{y}_1)] \]\[+ p \rho^{p-1} d_\rho[\lambda \nabla \cdot \textbf{c}_{\textbf{y}_1} \nabla \cdot \textbf{u} +   \mu  \varepsilon(\textbf{u}) \varepsilon(\textbf{c}_{\textbf{y}_1})]  +  p \rho^{p-1} d_\rho [\lambda \nabla \cdot {\textbf{y}_1} \nabla \cdot \textbf{c}_\textbf{u} +   \mu  \varepsilon(\textbf{c}_\textbf{u}) \varepsilon(\textbf{y}_1)]
+\]\[=-\int_\Omega -d_\rho z_1 + d_\rho z_2 - d_\rho y_2 + p\rho^{p-1}d_\rho [\lambda \nabla \cdot \textbf{y}_1 \nabla \cdot \textbf{u} + \mu \varepsilon(\textbf{u})\varepsilon(\textbf{y}_1)]\]
+
+Equation 1
+\[\int_\Omega p \rho^{p-1} c_\rho [\lambda \nabla \cdot {\textbf{y}_1} \nabla \cdot \textbf{d}_\textbf{u} +  \mu  \varepsilon(\textbf{d}_\textbf{u})\varepsilon(\textbf{y})] + \rho^{p} [\lambda \nabla \cdot \textbf{c}_{\textbf{y}_1} \nabla \cdot \textbf{d}_\textbf{u} +  \mu  \varepsilon(\textbf{d}_\textbf{u})\varepsilon(\textbf{c}_{\textbf{y}_1})] \]
+\[=-\int_\Gamma \textbf{d}_\textbf{u} \cdot \textbf{f} -\int_\Omega \rho^{p} [\lambda \nabla \cdot \textbf{y} \nabla \cdot \textbf{d}_\textbf{u} + \mu \varepsilon(d_\textbf{u})\varepsilon(\textbf{y}_1)]\]
+
+Equation 2
+\[ \int_\Omega  - d_\sigma c_{z_1} +d_\sigma c_{z_2}  + H(d_\sigma)c_{y_2} = -\int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2\]
+
+\item Primal Feasibility - these equations ensure the equality constraints are met
+
+Equation 3
+\[\int_\Omega p \rho^{p-1} c_p[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla \cdot \textbf{u} +  \mu  \varepsilon(\textbf{u}) \varepsilon(\textbf{d}_{\textbf{y}_1})] +  \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla \cdot \textbf{c}_\textbf{u} +  \mu  \varepsilon(\textbf{c}_\textbf{u}) \varepsilon(\textbf{d}_{\textbf{y}_1})]  \]
+\[ =-\int_\Omega \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla \cdot \textbf{u} + \mu  \varepsilon(\textbf{u}) \varepsilon(\textbf{d}_{\textbf{y}_1})]  + \int_\Gamma  \textbf{d}_{\textbf{y}_1} \cdot \textbf{f} \]
+\\Equation 4
+    \[-\int_\Omega d_{z_1}(c_\sigma - c_{s_1})=\int_\Omega d_{z_1} (\sigma - s_1)\]
+    
+    Equation 5
+    \[-\int_\Omega d_{z_2}(-c_\sigma-c_{s_2}) = \int_\Omega d_{z_2} (1-\sigma-s_2)\]
+    
+    Equation 6
+    \[-\int_\Omega   d_{y_2}(c_\rho - H(c_\sigma))=\int_\Omega d_{y_2}(\rho - H(\sigma))\]
+    \item Complementary Slackness - these equations essentially ensure the barrier is met - in the actual solution, we need $s^T z = 0$
+    Equation 7
+    \[\int_\Omega d_{s_1}(c_{s_1}z_1/s_1 +  c_{z_1} )=-\int_\Omega d_{s_1}(z_1 - \alpha/s_1) ,\;\;\; \alpha \to 0\]
+    
+    Equation 8
+    \[\int_\Omega d_{s_2} (c_{s_2}z_2/s_2 + c_{z_2} )=-\int_\Omega d_{s_2} (z_2 - \alpha/s_2) ,\;\;\; \alpha \to 0\]
+    
+    Dual Feasibility - Multiplier on slacks and slack variables must be kept greater than 0. (This is the only part not implemented in the "assemble\_block\_system()" function)
+    \[s,z \geq 0\]
+
+\end{enumerate}
+
+
+
+\section{Discretization}
+I use a quadrilateral mesh with $Q_1$ element to discretize the displacement and displacement Lagrange multiplier. Piecewise constant $DGQ_0$ elements are used to discretize the density, unfiltered density, density slack variables, and multipliers for the slack variables and filter constraint.
+
+
+
+\section{Nonlinear Algorithm}
+
+While most of the discussion above follows traditional and well-known approaches to solving nonlinear optimization problems, it turns out that the problem is actually quite difficult to solve in practice. In particular, it is quite nonlinear and an important question is not just to find search directions $c_\bullet$ as discussed above based on a Newton method, but that one needs to spend quite a lot of attention to how far one wants to go in this direction. This is often called ``line search" and comes down to the question of how to choose the step length $\alpha_k \in (0,1]$ so that we move from the current iterate $x_k$ to the next iterate $x_{k+1}=x_k+\alpha_k x_k$ in as efficient a way as possible. It is well understood that we need to eventually choose $\alpha_k=1$ to realize the Newton's method's quadratic convergence; however, in the early iterations, taking such a long step might actually make things worse, either by leading to a point that has a worse objective function or at which the constraints are satisfied less well than they are at $x_k$.
+
+Very complex algorithms have been proposed to deal with this issue. \cite{Nocedal2009}\cite{Wchter2005} Here, we implement a watchdog-search algorithm.\cite{Nocedal2006} When discussing this algorithm, I will use the vector $\textbf{x}$ to represent all primal variables - the filtered and unfiltered densities, slack variables and displacement - and use the vector $\textbf{y}$ to represent all of the dual vectors. The solution to the Newton System above will now be referred to as $\Delta \textbf{x}$ and $\Delta \textbf{y}$ instead of $c_{\{\cdot\}}$. A merit function is referred to here as $\phi(\textbf{x,\textbf{y}})$ The watchdog algorithm is then as follows:
+
+\begin{algorithm}[H]
+Set barrier value, $\alpha$ \\
+Set descent requirement, $\nu$ \\
+Set initial guess $\textbf{x}_0, \textbf{y}_0$ \\
+\While{Barrier above minimal value}
+{
+  \While{Convergence not reached}
+  {
+  \For{$i = 0$ to $\hat{t}$ - typically 5 or 8}
+  {Compute step $\Delta \textbf{x}_{k+i}$, $\Delta \textbf{y}_{k+i}$ with Newton's Method \\
+  Compute maximal feasible step $\beta^\textbf{x}_{k+i}, \beta^\textbf{y}_{k+i}$ 
+  Compute $\textbf{x}_{k+i+1}=\textbf{x}_{k+i} + \beta^\textbf{x}_{k+i} \Delta \textbf{x}_{k+i}$ and $\textbf{y}_{k+i+1}=\textbf{y}_{k+i} + \beta^\textbf{y}_{k+i} \Delta \textbf{y}_{k+i}$ \\
+  \If{$\phi(\textbf{x}_{k+i+1},\textbf{y}_{k+i+1}) < \phi(\textbf{x}_k,\textbf{y}_k) + \nu D(\phi(\textbf{x}_{k},\textbf{y}_k);\beta^\textbf{x}_{k} \Delta \textbf{x}_{k}, \beta^\textbf{y}_{k} \Delta \textbf{y}_{k})$ }
+    {
+        Accept $\textbf{x}_{k+i + 1}$, $\textbf{y}_{k+i + 1}$ \\
+        $k = k+ i + 1$ \\
+        Found Step is True \\
+        Break for loop
+    }
+  
+  }
+  \If{  Found Step is False}
+    {   
+    Compute step $\Delta \textbf{x}_{k+i}$, $\Delta \textbf{y}_{k+i}$ with Newton's Method \\
+    Compute maximal feasible step $\beta^\textbf{x}_{k+i}, \beta^\textbf{y}_{k+i}$ such that $\textbf{x}_{k+i} + \beta^\textbf{x}_{k+i} \Delta \textbf{x}_{k+i}$ and $\textbf{y}_{k+i} + \beta^\textbf{y}_{k+i} \Delta \textbf{y}_{k+i}$ maintain $s\geq 0$ and $z\geq 0$ elementwise\\
+    Find $\gamma_{k+\hat{t}+1}$ so that $\phi(\textbf{x}_{k+\hat{t} +2},\textbf{y}_{k+\hat{t} +2}) \leq \phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1}) + \nu \gamma_{k+\hat{t}+1}D(\phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1});\beta^\textbf{x}_{k+\hat{t}+1} \Delta \textbf{x}_{k+\hat{t}+1}, \beta^\textbf{y}_{k+\hat{t}+1} \Delta \textbf{y}_{k+\hat{t}+1})$ \\
+    $\textbf{x}_{k+\hat{t}+2} = \textbf{x}_{k+\hat{t}+1} + \gamma_{k+\hat{t}+1} \beta^\textbf{x}_{k+\hat{t}+1} \Delta \textbf{x}_{k+\hat{t}+1} $ \\
+    $\textbf{y}_{k+\hat{t}+2} = \textbf{y}_{k+\hat{t}+1} + \gamma_{k+\hat{t}+1} \beta^\textbf{y}_{k+\hat{t}+1} \Delta \textbf{y}_{k+\hat{t}+1} $ \\
+        \eIf
+        {$ \phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1}) \leq \phi(\textbf{x}_{k},\textbf{y}_{k}) $\textbf{ or }$\phi(\textbf{x}_{k+\hat{t}+2},\textbf{y}_{k+\hat{t}+2}) \leq \phi{\textbf{x}_k,\textbf{y}_k} + \nu D(\phi(\textbf{x}_{k},\textbf{y}_{k}); \beta^\textbf{x}_{k} \Delta \textbf{x}_{k}, \beta^\textbf{y}_{k} \Delta \textbf{y}_{k})$
+        }
+        {
+            Accept $\textbf{x}_{k+\hat{t}+2}$, $\textbf{y}_{k+\hat{t}+2}$\\
+            $k=k+\hat{t}+ 2$
+        }
+        {
+            \eIf
+            {$\phi(\textbf{x}_{k+\hat{t}+1},\textbf{y}_{k+\hat{t}+1})  > \phi(\textbf{x}_{k},\textbf{y}_{k})$}
+            {Find $\gamma_{k}$ such that $\phi(\textbf{x}_{k+\hat{t}+3},\textbf{y}_{k+\hat{t}+3})\leq  \phi{\textbf{x}_k,\textbf{y}_k} + \nu \gamma_k D(\phi(\textbf{x}_{k},\textbf{y}_{k}); \beta^\textbf{x}_{k} \Delta \textbf{x}_{k}, \beta^\textbf{y}_{k} \Delta \textbf{y}_{k})$\\
+            $\textbf{x}_{k+\hat{t}+3} = \textbf{x}_{k} + \gamma_{k} \beta^\textbf{x}_{k} \Delta \textbf{x}_{k} $ \\
+            $\textbf{y}_{k+\hat{t}+3} = \textbf{y}_{k} + \gamma_{k} \beta^\textbf{y}_{k} \Delta \textbf{y}_{k} $
+            
+            Accept $\textbf{x}_{k+\hat{t} +3}$, $\textbf{y}_{k+\hat{t} +3}$\\
+            $k=k+\hat{t}+ 3$
+            }
+            {
+            Compute step $\Delta \textbf{x}_{k+\hat{t}+2}$, $\Delta \textbf{y}_{k+\hat{t}+2}$\\
+            Compute maximal feasible step $\beta^\textbf{x}_{k+\hat{t} +2}, \beta^\textbf{y}_{k+\hat{t} + 2}$ \\
+            Find $\gamma_{k+\hat{t} +2}$ such that $\phi(\textbf{x}_{k+\hat{t} +3},\textbf{y}_{k+\hat{t} +3}) \leq \phi(\textbf{x}_{k+\hat{t} +2},\textbf{y}_{k+\hat{t} +2}) +
+            \nu\gamma_{k+\hat{t} +2}D(\phi(\textbf{x}_{k+\hat{t} +2},\textbf{y}_{k+\hat{t} +2}); \beta^\textbf{x}_{k+\hat{t}+2} \Delta \textbf{x}_{k+\hat{t}+2}, \beta^\textbf{y}_{k+\hat{t}+2} \Delta \textbf{y}_{k+\hat{t}+2})$\\
+            $\textbf{x}_{k+\hat{t}+3} = \textbf{x}_{k+\hat{t}+2} + \gamma_{k+\hat{t}+2} \beta^\textbf{x}_{k+\hat{t}+2} \Delta \textbf{x}_{k+\hat{t}+2} $ \\
+            $\textbf{y}_{k+\hat{t}+3} = \textbf{y}_{k+\hat{t}+2} + \gamma_{k+\hat{t}+2} \beta^\textbf{y}_{k+\hat{t}+2} \Delta \textbf{y}_{k+\hat{t}+2} $\\
+            Accept $\textbf{x}_{k+\hat{t} +3}$, $\textbf{y}_{k+\hat{t} +3}$ \\
+            $k=k+\hat{t}+ 3$
+            }
+        }
+    }
+  }
+Reduce barrier size (see below)
+}
+\end{algorithm}
+
+Above, the ``Maximal Feasible Step" is given by
+
+\[\beta^\textbf{y} = \min\{1,\max \beta \text{ such that }\left(\textbf{z}_{k+i} + \beta^\textbf{z}_{k+i} \Delta \textbf{z}_{k+i}\right)_j \geq \zeta \textbf{z}_{k+i,j} \forall j\}\]
+\[\beta^\textbf{x} = \min\{1,\max \beta \text{ such that }\left(\textbf{s}_{k+i} + \beta^\textbf{s}_{k+i} \Delta \textbf{s}_{k+i}\right)_j \geq \zeta \textbf{s}_{k+i,j} \forall j\}\]
+
+Above, $\zeta$ is the "fraction to boundary" that is allowed on any step. Because the derivatives become ill-conditioned near the boundary, this technique stands in for a trust region and is necessary to ensure good approximations in the future. $\zeta$ is taken to be $\max\{.8, 1-\alpha\}$, which allows movement closer to the boundary as the barrier becomes smaller. In the future, when implementing the LOQO algorithm for barrier reduction, this must be kept to .8 as the barrier parameter can vary wildly.
+
+Separately, we need to deal with the log-barrier that we have used to enforce the positivity constraint on the slack variables $s_1,s_2$: In the statement of the final optimization problem we solve, we have added the term
+\[
+  -\alpha \int_\Omega (\log(s_1) + \log(s_2)).
+\]
+The question is how we should choose the penalty factor $\alpha$. As with all penalty methods, we are in reality only interested in the limit as $\alpha\to 0$, since this is then the problem we really wanted to solve, subject to the positivity constraints on the slack variables. On the other hand, we need to choose $\alpha$ large enough to make the problem solvable in practice. Actual implementations therefore start with a larger value of $\alpha$ and gradually decrease it as the outer iterations proceed.
+
+In the monotone method implemented here, the barrier parameter is updated whenever some level of convergence is achieved at the current barrier parameter. I use the $l_\infty$ norm of the KKT conditions to check for convergence at each barrier size. The requirement is that $\norm{KKT}_{l_\infty} < c \cdot \alpha$ where $c$ is a constant over any barrier size and $\alpha$ is the barrier parameter. This forces better convergence in later iterations, and is the same requirement as is used in IPOPT.
+
+Here, the barrier is reduced linearly at larger values, and superlinearly at smaller values. At larger values, it is multiplied by a constant (around .6), and at lower values the barrier value is replaced by the barrier value raised to some exponent (around 1.2). This method has proven to be effective at keeping the subproblem solvable at large barrier values, while still allowing superlinear convergence at smaller barrier values.
+\[\alpha_{k+1} = \min\{\alpha_k^{1.2},.6\alpha_k\}\]
+
+While taking large steps at reducing the barrier size when convergence is reached is widely used, more recent research has shown that it typically faster to use algorithms that adaptively update barrier each iteration, i.e., in which we use concrete criteria at the end of each iteration to determine what the penalty parameter should be in the next iteration, rather than using reduction factors that are independent of the current solution. That said, such methods are also more complicated and we will not do this here.
+
+\section{Merit Function}
+
+The algorithm outlined above makes use of a "merit function". Merit functions are used to determine whether a step from $x_k$ to a proposed point $x_{k+1}$ is beneficial. In unconstrained optimization problems, one can simply check this with the object function we try to minimize, and typically uses conditions such as the Wolfe and Goldstein conditions.
+
+In constrained optimization problems, the question is how to balance reduction in the objective function against a possible increase in the violation of constraints: A proposed step might make the objective function smaller but be further away from the set of points that satisfy the constraints -- or the other way around. This trade-off is typically resolved by using a merit function that combines the two criteria.
+
+Here, we use an exact $l_1$ merit function to test the steps.
+\[\phi(\textbf{x},\textbf{y}) = \int_{\partial \Omega} \textbf{u}\cdot \textbf{t} - \alpha \int_\Omega (log(s_1) + log(s_2)) + p \sum_i\left| \int_\Omega y_{2,i}(H(\sigma) - \rho) \right|\]
+\[ + p \sum_i\left| \int_{\partial \Omega} \textbf{y}_{1,i}\cdot \textbf{t}  - \int_\Omega \rho^p[\lambda \nabla \cdot \textbf{u} \nabla \cdot \textbf{y}_{1,i} + \mu \varepsilon{\textbf{u}}\varepsilon{\textbf{y}_{1,i}}]\right|\]
+\[+ p \sum_i\left| \int_\Omega z_{1,i}(s_1 - \sigma) \right|+ p \sum_i\left| \int_\Omega z_{2,i}(1-\sigma - s_2) \right|\]
+
+Here, $p$ is a penalty parameter. This merit function being exact means that there exists some $p_0$ so that for any $p > p_0$, the merit function has its minima at the same location as the original problem. This penalty parameter is updated (by recommendation of Nocedal and Wright) \cite{Benson2002}
+\[p > \frac{.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}  \]
+Where $H$ is the hessian of the objective function, $x$ is a vector of our decision variables, $f$ is the objective function, and $c_i$ is the error on a current equality constraint.
+\\
+My use of this method is partially due to already having most of the necessary parts calculated in finding the right hand side, but also the use of an exact merit function ensures that it is minimized in the same location as the overall problem. Recent research has shown that one can replace merit functions by what are called "filter methods", and one should consider using these instead as they prove to be more efficient.
+
+\chapter{Results}
+\section{Test Problem}
+The algorithms used above are tested against a traditional topology optimization problem called the Messerschmitt-Bolkow-Blohm Beam (MBB Beam). 
+
+This problem considers the optimal 2-d structure that can be built on a rectangle 6 units wide, and 1 unit tall. The bottom corners are fixed in place in the $y$ direction using a zero Dirichlet boundary condition, and a downward force is applied in the center of the top of the beam by enforcing a Neumann boundary condition. The rest of the boundary is allowed to move, and has no external force applied, which takes the form of a zero Neumann boundary condition. In essence, we are asking the following question: How should we design a bridge in a way so that if the bottom left and bottom right point of the bridge are on rollers that allow these points to move horizontally but not vertically, and so that the displacement in response to the vertical force in the center is minimal.
+
+While the total volume of the domain is 6, 3 units of material are allowed for the structure. Because of the symmetry of the problem, it could be posed on a rectangle of width 3 and height 1 by cutting the original domain in half, and  using zero Dirichlet boundary conditions in the $x$ direction along the cut edge, as shown in figure \ref{fig:MBB_geometry}. That said, symmetry was nice to look for in debugging, so I solved the problem on the whole domain.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width = .5\textwidth]{The-MBB-beam-problem-geometry.png}
+    \caption{The MBB problem domain and boundary conditions}
+    \label{fig:MBB_geometry}
+\end{figure}
+
+
+Using the program discussed above, we find the minimum of the MBB Beam and the individual components of the solution look as follows:
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width = 6 in]{visit0000.png}
+    \caption{Filtered density}
+    \includegraphics[width = 6 in]{visit0001.png}
+    \caption{Unfiltered Density}
+\end{figure}
+
+These pictures show that what we find here is in accordance with what one typically sees in other publications on the topic. Maybe more interestingly, the result looks like a truss bridge (except that we apply the load at the top of the trusses, rather than the bottom as in real truss bridges, akin to a "deck truss" bridge), suggesting that the designs that have been used in bridge-building for centuries are indeed based on ideas we can now show to be optimal in some sense.
+
+
+\subsection*{Possibilities for extensions}
+
+The results shown above took  around 75 iterations to find, which is quite concerning given the expense in solving the large linear systems in each iteration. Looking at the evolution, it does look as though the convergence has moments of happening quickly and moments of happening slowly. I believe this to be due to both a lack of precision on when and how to decrease the boundary values, as well as my choice of merit function being sub-optimal. In the future, a LOQO barrier update replacing the monotone reduction, as well as a Markov Filter in place of a merit function will decrease the number of necessary iterations significantly.
+
+The barrier decrease is most sensitive in the middle of the convergence, which is problematic, as it seems like I need it to decrease quickly, then slowly, then quickly again.
+
+Secondly, the linear solver used here is just the sparse direct solver based on the SparseDirectUMFPACK class. This works reasonably well on small problems, but the formulation of the optimization problem detailed above has quite a large number of variables and so the linear problem is not only large but also has a lot of nonzero entries in many rows, even on meshes that overall are still relatively coarse. As a consequence, the solver time dominates the computations, and more sophisticated approaches at solving the linear system are necessary.
+
+
