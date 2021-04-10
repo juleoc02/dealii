@@ -132,7 +132,6 @@ namespace SAND
   {
     constexpr types::boundary_id no_force   = 101;
     constexpr types::boundary_id down_force = 102;
-    constexpr types::boundary_id held_still = 103;
   } // namespace BoundaryIds
 
 
@@ -246,7 +245,7 @@ namespace SAND
     , dof_handler(triangulation)
     , density_ratio(.5)
     , density_penalty_exponent(3)
-    , filter_r(.25)
+    , filter_r(.251)
     , penalty_multiplier(1)
     , timer(std::cout, TimerOutput::summary, TimerOutput::wall_times)
   {}
