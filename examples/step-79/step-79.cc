@@ -409,7 +409,7 @@ namespace SAND
 
     const unsigned int              n_p         = dofs_per_block[0];
     const unsigned int              n_u         = dofs_per_block[1];
-    const std::vector<unsigned int> block_sizes = {
+    const std::vector<BlockVector<double>::size_type> block_sizes = {
       n_p, n_u, n_p, n_u, n_p, n_p, n_p, n_p, n_p};
 
     BlockDynamicSparsityPattern dsp(9, 9);
@@ -2225,7 +2225,7 @@ namespace SAND
     stlfile << "solid bridge\n" << std::scientific;
     double height = .25;
 
-    for (const auto cell : dof_handler.active_cell_iterators())
+    for (const auto &cell : dof_handler.active_cell_iterators())
       {
         if (nonlinear_solution.block(
               SolutionBlocks::density)[cell->active_cell_index()] > 0.5)
