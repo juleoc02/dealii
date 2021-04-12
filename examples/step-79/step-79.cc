@@ -406,8 +406,8 @@ namespace SAND
     const std::vector<types::global_dof_index> dofs_per_block =
       DoFTools::count_dofs_per_fe_block(dof_handler, block_component);
 
-    const unsigned int              n_p         = dofs_per_block[0];
-    const unsigned int              n_u         = dofs_per_block[1];
+    const unsigned int                                n_p = dofs_per_block[0];
+    const unsigned int                                n_u = dofs_per_block[1];
     const std::vector<BlockVector<double>::size_type> block_sizes = {
       n_p, n_u, n_p, n_u, n_p, n_p, n_p, n_p, n_p};
 
