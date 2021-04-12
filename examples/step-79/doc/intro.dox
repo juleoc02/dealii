@@ -81,7 +81,7 @@ effective. It has been shown that using $p=3$ is sufficiently high to create
 material is either present or not present at all points.
 
 More material should always provide a less compliant structure, and so the
-inequality constraint can be viewed as an equality, where the total volume used
+inequality constraint can be viewed as an equality, where the total vlume used
 is the maximum volume.
 
 Using this density idea also allows us to reframe the volume constraint on the
@@ -210,7 +210,7 @@ variables
     <li> $s_1$ - a slack variable corresponding to the lower bound</li>
     <li> $s_2$ - a slack variable corresponding to the upper bound</li>
 </ol>
-This now gives the following problem:
+this now gives the following problem:
 @f[
   \min_{\rho,\sigma,\mathbf u, s_1, s_2} \int_{\partial\Omega} \textbf{u} \cdot
   \textbf{f} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)
