@@ -34,7 +34,7 @@ measure of the potential energy stored in an object due to its deformation, but
 also works as a measure of total displacement over the structure.
 
 @f[
-  \text{Minimize  } \int_E \frac{1}{2}\sigma : \epsilon 
+  \text{Minimize  } \int_E \frac{1}{2}\sigma : \epsilon
 @f]
 @f[
   \text{subject to } \norm{E}\leq V_{\max}
@@ -81,7 +81,7 @@ effective. It has been shown that using $p=3$ is sufficiently high to create
 material is either present or not present at all points.
 
 More material should always provide a less compliant structure, and so the
-inequality constraint can be viewed as an equality, where the total vlume used
+inequality constraint can be viewed as an equality, where the total volume used
 is the maximum volume.
 
 Using this density idea also allows us to reframe the volume constraint on the
@@ -89,7 +89,7 @@ optimization problem. Use of SIMP then turns the optimization problem into the
 following:
 
 @f[
-  \text{Minimize  } \int_\Omega \frac{1}{2}\sigma(\rho) : \epsilon(\rho) 
+  \text{Minimize  } \int_\Omega \frac{1}{2}\sigma(\rho) : \epsilon(\rho)
 @f]
 @f[
   \text{subject to } \int_\Omega \rho(x) = V_{\max},
@@ -169,8 +169,8 @@ objective function), the choice of filter has an effect on the solution of the
 problem. The density filter as part of a second order method works by
 introducing an unfiltered density, which I refer to as $\sigma$, and then
 requiring that the density be a convolution of the unfiltered density:
-@f[ 
-  \rho = H(\sigma). 
+@f[
+  \rho = H(\sigma).
 @f]
 Here, $H$ is an operator so that $\rho(\mathbf x)$ is some kind of average of
 the values of $\sigma$ in the area around $\mathbf x$ -- i.e., it is a smoothed
@@ -210,7 +210,7 @@ variables
     <li> $s_1$ - a slack variable corresponding to the lower bound</li>
     <li> $s_2$ - a slack variable corresponding to the upper bound</li>
 </ol>
-this now gives the following problem:
+This now gives the following problem:
 @f[
   \min_{\rho,\sigma,\mathbf u, s_1, s_2} \int_{\partial\Omega} \textbf{u} \cdot
   \textbf{f} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)
@@ -583,7 +583,7 @@ there exists some $p_0$ so that for any $p > p_0$, the merit function has its
 minima at the same location as the original problem. This penalty parameter is
 updated (by recommendation of Nocedal and Wright) @cite Benson2002
 @f[
-  p > \frac{.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}  
+  p > \frac{.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}
 @f]
 Where $H$ is the hessian of the objective function, $x$ is a vector of our
 decision variables, $f$ is the objective function, and $c_i$ is the error on a
@@ -595,5 +595,3 @@ merit function ensures that it is minimized in the same location as the overall
 problem. Recent research has shown that one can replace merit functions by what
 are called "filter methods", and one should consider using these instead as they
  prove to be more efficient.
-
-
