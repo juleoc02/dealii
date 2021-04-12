@@ -81,7 +81,7 @@ effective. It has been shown that using $p=3$ is sufficiently high to create
 material is either present or not present at all points.
 
 More material should always provide a less compliant structure, and so the
-inequality constraint can be viewed as an equality, where the total vlume used
+inequality constraint can be viewed as an equality, where the total volume used
 is the maximum volume.
 
 Using this density idea also allows us to reframe the volume constraint on the
@@ -210,10 +210,10 @@ variables
     <li> $s_1$ - a slack variable corresponding to the lower bound</li>
     <li> $s_2$ - a slack variable corresponding to the upper bound</li>
 </ol>
-this now gives the following problem:
+This now gives the following problem:
 @f[
   \min_{\rho,\sigma,\mathbf u, s_1, s_2} \int_{\partial\Omega} \textbf{u} \cdot
-  \textbf{f} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)
+  \textbf{t} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)
 @f]
 @f[
   \text{s.t.   } \rho = H(\sigma)
@@ -222,7 +222,7 @@ this now gives the following problem:
   \int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{v}):
   \epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla
   \cdot \textbf{v} \right)  \right) = \int_{\partial \Omega} \textbf{v} \cdot
-  \textbf{f}
+  \textbf{t}
 @f]
 @f[
   \int_\Omega \rho = V
@@ -250,11 +250,11 @@ constrained optimization problems: We introduce a Lagrangian in which we combine
 With these variables, the Lagrangian function reads as follows:
 
 @f{multiline}{
-  \mathcal{L} = \int_{\partial\Omega} \textbf{u} \cdot \textbf{f}
+  \mathcal{L} = \int_{\partial\Omega} \textbf{u} \cdot \textbf{t}
    - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right) -  \left(\int_\Omega
    \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{y}_1):\epsilon(\textbf{u}))
    \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla \cdot \textbf{y}_1
-   \right)  \right)- \int_{\partial \Omega} \textbf{y}_1 \cdot \textbf{f}\right)
+   \right)  \right)- \int_{\partial \Omega} \textbf{y}_1 \cdot \textbf{t}\right)
    \\- y_2 (\rho - H(\sigma)) - z_1 (\sigma-s_1) - z_2 (1 - s_2 -\sigma)
 @f}
 
@@ -286,7 +286,7 @@ $\{\cdot\}$ function.
   \forall d_\rho
 @f]
 @f[
-  \int_\Gamma \mathbf d_\textbf{u} \cdot \textbf{f} + \int_\Omega p\rho^{p}
+  \int_\Gamma \mathbf d_\textbf{u} \cdot \textbf{t} + \int_\Omega p\rho^{p}
   \left[\lambda (\nabla \cdot \mathbf d_\textbf{u})( \nabla \cdot \textbf{y}_1)
   + \mu \varepsilon(\mathbf d_\textbf{u}):\varepsilon(\textbf{y}_1)\right]=0\;\;
   \forall \textbf{d}_\textbf{u}
@@ -301,7 +301,7 @@ $\{\cdot\}$ function.
       \int_\Omega \rho^{p}\lambda (\nabla \cdot \mathbf d_{\textbf{y}_1})
       (\nabla \cdot \textbf{u}) +  \rho^{p}\mu  \varepsilon(\mathbf
       d_{\textbf{y}_1}) : \varepsilon(\textbf{u}) - \int_\Gamma \mathbf
-      d_{\textbf{y}_1} \cdot \textbf{f} =0 \;\;\forall \textbf{d}_{\textbf{y}_1}
+      d_{\textbf{y}_1} \cdot \textbf{t} =0 \;\;\forall \textbf{d}_{\textbf{y}_1}
     @f]
     @f[
       \int_\Omega d_{z_1}(\sigma - s_1) = 0\;\;\forall d_{z_1}
@@ -368,7 +368,7 @@ Equation 1
   \textbf{c}_{\textbf{y}_1} \nabla \cdot \textbf{d}_\textbf{u} +  \mu
   \varepsilon(\textbf{d}_\textbf{u})\varepsilon(\textbf{c}_{\textbf{y}_1})]
 \\
-=-\int_\Gamma \textbf{d}_\textbf{u} \cdot \textbf{f} -\int_\Omega \rho^{p}
+=-\int_\Gamma \textbf{d}_\textbf{u} \cdot \textbf{t} -\int_\Omega \rho^{p}
 [\lambda \nabla \cdot \textbf{y} \nabla \cdot \textbf{d}_\textbf{u} + \mu
 \varepsilon(d_\textbf{u})\varepsilon(\textbf{y}_1)]
 @f}
@@ -392,7 +392,7 @@ Equation 3
  =-\int_\Omega \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla
  \cdot \textbf{u} + \mu  \varepsilon(\textbf{u}) \varepsilon
  (\textbf{d}_{\textbf{y}_1})]  + \int_\Gamma  \textbf{d}_{\textbf{y}_1}
- \cdot \textbf{f}
+ \cdot \textbf{t}
 @f}
 
     Equation 4
@@ -581,7 +581,7 @@ Here, we use an exact $l_1$ merit function to test the steps.
 Here, $p$ is a penalty parameter. This merit function being exact means that
 there exists some $p_0$ so that for any $p > p_0$, the merit function has its
 minima at the same location as the original problem. This penalty parameter is
-updated (by recommendation of Nocedal and Wright) @cite Benson2002
+updated (by recommendation of Nocedal and Wright @cite Benson2002) as follows:
 @f[
   p > \frac{.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}
 @f]

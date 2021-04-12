@@ -61,11 +61,11 @@
 // do for now.
 //
 // As usual, we put everything into a common namespace. We then start
-// by declaring a number of symbolic names for numbers that will be
-// used throughout. Specifically, we have a *lot* of variables in this
-// program (of course the density and the displacement, but also the
-// unfiltered density and quite a number of Lagrange multipliers. It
-// is easy to forget which of these variables is at which position in
+// by declaring a number of symbolic names for constants that will be
+// used throughout this tutorial. Specifically, we have a *lot* of
+// variables in this program (of course the density and the displacement,
+// but also the unfiltered density and quite a number of Lagrange multipliers.
+// It is easy to forget which of these variables is at which position in
 // the solution vector, and trying to use numbers for these vector
 // components is a prescription for bugs. Rather, we define static
 // variables that can be used in all of these places and that have to
