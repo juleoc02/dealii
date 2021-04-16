@@ -1382,17 +1382,18 @@ namespace SAND
                     for (unsigned int i = 0; i < dofs_per_cell; ++i)
                       {
                         Tensor<1, dim> traction;
-                        traction[1] = -1;
+                        traction[1] = -1.;
 
                         cell_rhs(i) +=
-                          -1 * traction *
-                          fe_face_values[displacements].value(i, face_q_point) *
+                          -1 *
+                          (traction *
+                           fe_face_values[displacements].value(i,
+                                                               face_q_point)) *
                           fe_face_values.JxW(face_q_point);
 
                         cell_rhs(i) +=
-                          traction *
-                          fe_face_values[displacement_multipliers].value(
-                            i, face_q_point) *
+                          (traction * fe_face_values[displacement_multipliers]
+                                        .value(i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
                       }
                   }
@@ -1851,17 +1852,18 @@ namespace SAND
                     for (const auto i : fe_face_values.dof_indices())
                       {
                         Tensor<1, dim> traction;
-                        traction[1] = -1;
+                        traction[1] = -1.;
 
                         cell_rhs(i) +=
-                          -1 * traction *
-                          fe_face_values[displacements].value(i, face_q_point) *
+                          -1 *
+                          (traction *
+                           fe_face_values[displacements].value(i,
+                                                               face_q_point)) *
                           fe_face_values.JxW(face_q_point);
 
                         cell_rhs(i) +=
-                          traction *
-                          fe_face_values[displacement_multipliers].value(
-                            i, face_q_point) *
+                          (traction * fe_face_values[displacement_multipliers]
+                                        .value(i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
                       }
                   }
@@ -1941,10 +1943,10 @@ namespace SAND
                        ++face_q_point)
                     {
                       Tensor<1, dim> traction;
-                      traction[1] = -1;
+                      traction[1] = -1.;
 
                       objective_function_merit +=
-                        traction * displacement_face_values[face_q_point] *
+                        (traction * displacement_face_values[face_q_point]) *
                         fe_face_values.JxW(face_q_point);
                     }
                 }

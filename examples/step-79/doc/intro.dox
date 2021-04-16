@@ -167,7 +167,7 @@ optimization methods tend to prefer use of a density filter.
 As the filters affect the gradient and Hessian of the compliance (i.e., the
 objective function), the choice of filter has an effect on the solution of the
 problem. The density filter as part of a second order method works by
-introducing an unfiltered density, which I refer to as $\sigma$, and then
+introducing an unfiltered density, which we refer to as $\sigma$, and then
 requiring that the density be a convolution of the unfiltered density:
 @f[
   \rho = H(\sigma).
@@ -275,8 +275,8 @@ barrier method, this parameter must be driven close to 0 to give a good
 approximation of the original problem.
 
 In the following, let us state all of these conditions where
-$d_{\{\cdot\}}$ is a test function that is naturally paired with the
-$\{\cdot\}$ function.
+$d_{\{\cdot\}}$ is a test function that is naturally paired with variational
+derivatives of the lagrangian with respect to the $\{\cdot\}$ function.
 <ol>
 <li> Stationarity:
 @f[
@@ -437,7 +437,7 @@ Equation 3
 
 
 <h3>Discretization</h3>
-I use a quadrilateral mesh with $Q_1$ element to discretize the displacement and
+We use a quadrilateral mesh with $Q_1$ element to discretize the displacement and
  displacement Lagrange multiplier. Piecewise constant $DGQ_0$ elements are used
  to discretize the density, unfiltered density, density slack variables, and
  multipliers for the slack variables and filter constraint.
@@ -461,7 +461,7 @@ While most of the discussion above follows traditional and well-known approaches
 
 Very complex algorithms have been proposed to deal with this issue.
 @cite Nocedal2009 @cite Wchter2005 Here, we implement a watchdog-search
-algorithm.@cite Nocedal2006 When discussing this algorithm, I will use the
+algorithm.@cite Nocedal2006 When discussing this algorithm, we will use the
 vector $\textbf{x}$ to represent all primal variables - the filtered and
 unfiltered densities, slack variables and displacement - and use the vector
 $\textbf{y}$ to represent all of the dual vectors. The solution to the Newton
@@ -524,7 +524,7 @@ subject to the positivity constraints on the slack variables. On the other hand,
 
 In the monotone method implemented here, the barrier parameter is updated
 whenever some level of convergence is achieved at the current barrier parameter.
- I use the $l_\infty$ norm of the KKT conditions to check for convergence at
+ We use the $l_\infty$ norm of the KKT conditions to check for convergence at
  each barrier size. The requirement is that
  $\norm{KKT}_{l_\infty} < c \cdot \alpha$ where $c$ is a constant over any
  barrier size and $\alpha$ is the barrier parameter. This forces better
