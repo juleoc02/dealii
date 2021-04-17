@@ -76,7 +76,7 @@
 // A similar issue arises with the ordering of blocks in the system
 // matrix and in vectors. The matrices have $9\times 9$ blocks, and
 // it's difficult to remember which is which. It is far easier to just
-// use symbolic names for those as well.
+// use symbolic names for those as well. The
 //
 // Finally, while we're at it, we introduce symbolic names also for
 // the boundary indicators we will use, in the same spirit as was done
@@ -130,9 +130,40 @@ namespace SAND
 
   namespace BoundaryIds
   {
-    constexpr types::boundary_id no_force   = 101;
-    constexpr types::boundary_id down_force = 102;
+    constexpr types::boundary_id down_force = 101;
+    constexpr types::boundary_id no_force   = 102;
   } // namespace BoundaryIds
+
+  namespace ValueExtractors
+  {
+    template <int dim>
+    const FEValuesExtractors::Scalar
+      densities(SolutionComponents::density<dim>);
+    template <int dim>
+    const FEValuesExtractors::Vector
+      displacements(SolutionComponents::displacement<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar
+      unfiltered_densities(SolutionComponents::unfiltered_density<dim>);
+    template <int dim>
+    const FEValuesExtractors::Vector displacement_multipliers(
+      SolutionComponents::displacement_multiplier<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar unfiltered_density_multipliers(
+      SolutionComponents::unfiltered_density_multiplier<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar
+      density_lower_slacks(SolutionComponents::density_lower_slack<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar density_lower_slack_multipliers(
+      SolutionComponents::density_lower_slack_multiplier<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar
+      density_upper_slacks(SolutionComponents::density_upper_slack<dim>);
+    template <int dim>
+    const FEValuesExtractors::Scalar density_upper_slack_multipliers(
+      SolutionComponents::density_upper_slack_multiplier<dim>);
+  } // namespace ValueExtractors
 
 
   // @sect3{The SANDTopOpt main class}
@@ -379,7 +410,6 @@ namespace SAND
 
   // @sect3{Setting up block matrices and vectors}
 
-
   // The next function makes a giant 9-by-9 block matrix, and also
   // sets up the necessary block vectors.  The sparsity pattern for
   // this matrix includes the sparsity pattern for the filter
@@ -494,10 +524,9 @@ namespace SAND
     // couples all density variables to enforce the volume
     // constraint. This will ultimately lead to a dense sub-block
     // of the matrix, but there is little we can do about that.
-    const FEValuesExtractors::Scalar densities(
-      SolutionComponents::density<dim>);
-    const ComponentMask density_mask = fe.component_mask(densities);
-    const IndexSet      density_dofs =
+    const ComponentMask density_mask =
+      fe.component_mask(ValueExtractors::densities<dim>);
+    const IndexSet density_dofs =
       DoFTools::extract_dofs(dof_handler, density_mask);
 
     types::global_dof_index last_density_dof =
@@ -755,24 +784,7 @@ namespace SAND
     system_matrix = 0;
     system_rhs    = 0;
 
-    const FEValuesExtractors::Scalar densities(
-      SolutionComponents::density<dim>);
-    const FEValuesExtractors::Vector displacements(
-      SolutionComponents::displacement<dim>);
-    const FEValuesExtractors::Scalar unfiltered_densities(
-      SolutionComponents::unfiltered_density<dim>);
-    const FEValuesExtractors::Vector displacement_multipliers(
-      SolutionComponents::displacement_multiplier<dim>);
-    const FEValuesExtractors::Scalar unfiltered_density_multipliers(
-      SolutionComponents::unfiltered_density_multiplier<dim>);
-    const FEValuesExtractors::Scalar density_lower_slacks(
-      SolutionComponents::density_lower_slack<dim>);
-    const FEValuesExtractors::Scalar density_lower_slack_multipliers(
-      SolutionComponents::density_lower_slack_multiplier<dim>);
-    const FEValuesExtractors::Scalar density_upper_slacks(
-      SolutionComponents::density_upper_slack<dim>);
-    const FEValuesExtractors::Scalar density_upper_slack_multipliers(
-      SolutionComponents::density_upper_slack_multiplier<dim>);
+
 
     QGauss<dim>       quadrature_formula(fe.degree + 1);
     QGauss<dim - 1>   face_quadrature_formula(fe.degree + 1);
@@ -846,7 +858,7 @@ namespace SAND
     std::vector<double> filter_adjoint_unfiltered_density_multiplier_values(
       n_q_points);
 
-
+    using namespace ValueExtractors;
     for (const auto &cell : dof_handler.active_cell_iterators())
       {
         cell_matrix = 0;
@@ -859,36 +871,37 @@ namespace SAND
         lambda.value_list(fe_values.get_quadrature_points(), lambda_values);
         mu.value_list(fe_values.get_quadrature_points(), mu_values);
 
-        fe_values[densities].get_function_values(nonlinear_solution,
-                                                 old_density_values);
-        fe_values[displacements].get_function_values(nonlinear_solution,
-                                                     old_displacement_values);
-        fe_values[displacements].get_function_divergences(
+        fe_values[densities<dim>].get_function_values(nonlinear_solution,
+                                                      old_density_values);
+        fe_values[displacements<dim>].get_function_values(
+          nonlinear_solution, old_displacement_values);
+        fe_values[displacements<dim>].get_function_divergences(
           nonlinear_solution, old_displacement_divs);
-        fe_values[displacements].get_function_symmetric_gradients(
+        fe_values[displacements<dim>].get_function_symmetric_gradients(
           nonlinear_solution, old_displacement_symmgrads);
-        fe_values[displacement_multipliers].get_function_values(
+        fe_values[displacement_multipliers<dim>].get_function_values(
           nonlinear_solution, old_displacement_multiplier_values);
-        fe_values[displacement_multipliers].get_function_divergences(
+        fe_values[displacement_multipliers<dim>].get_function_divergences(
           nonlinear_solution, old_displacement_multiplier_divs);
-        fe_values[displacement_multipliers].get_function_symmetric_gradients(
-          nonlinear_solution, old_displacement_multiplier_symmgrads);
-        fe_values[density_lower_slacks].get_function_values(
+        fe_values[displacement_multipliers<dim>]
+          .get_function_symmetric_gradients(
+            nonlinear_solution, old_displacement_multiplier_symmgrads);
+        fe_values[density_lower_slacks<dim>].get_function_values(
           nonlinear_solution, old_lower_slack_values);
-        fe_values[density_lower_slack_multipliers].get_function_values(
+        fe_values[density_lower_slack_multipliers<dim>].get_function_values(
           nonlinear_solution, old_lower_slack_multiplier_values);
-        fe_values[density_upper_slacks].get_function_values(
+        fe_values[density_upper_slacks<dim>].get_function_values(
           nonlinear_solution, old_upper_slack_values);
-        fe_values[density_upper_slack_multipliers].get_function_values(
+        fe_values[density_upper_slack_multipliers<dim>].get_function_values(
           nonlinear_solution, old_upper_slack_multiplier_values);
-        fe_values[unfiltered_densities].get_function_values(
+        fe_values[unfiltered_densities<dim>].get_function_values(
           nonlinear_solution, old_unfiltered_density_values);
-        fe_values[unfiltered_density_multipliers].get_function_values(
+        fe_values[unfiltered_density_multipliers<dim>].get_function_values(
           nonlinear_solution, old_unfiltered_density_multiplier_values);
-        fe_values[unfiltered_densities].get_function_values(
+        fe_values[unfiltered_densities<dim>].get_function_values(
           filtered_unfiltered_density_solution,
           filtered_unfiltered_density_values);
-        fe_values[unfiltered_density_multipliers].get_function_values(
+        fe_values[unfiltered_density_multipliers<dim>].get_function_values(
           filter_adjoint_unfiltered_density_multiplier_solution,
           filter_adjoint_unfiltered_density_multiplier_values);
 
@@ -897,76 +910,81 @@ namespace SAND
             for (const auto i : fe_values.dof_indices())
               {
                 const SymmetricTensor<2, dim> displacement_phi_i_symmgrad =
-                  fe_values[displacements].symmetric_gradient(i, q_point);
+                  fe_values[displacements<dim>].symmetric_gradient(i, q_point);
                 const double displacement_phi_i_div =
-                  fe_values[displacements].divergence(i, q_point);
+                  fe_values[displacements<dim>].divergence(i, q_point);
 
                 const SymmetricTensor<2, dim>
                   displacement_multiplier_phi_i_symmgrad =
-                    fe_values[displacement_multipliers].symmetric_gradient(
+                    fe_values[displacement_multipliers<dim>].symmetric_gradient(
                       i, q_point);
                 const double displacement_multiplier_phi_i_div =
-                  fe_values[displacement_multipliers].divergence(i, q_point);
+                  fe_values[displacement_multipliers<dim>].divergence(i,
+                                                                      q_point);
 
 
                 const double density_phi_i =
-                  fe_values[densities].value(i, q_point);
+                  fe_values[densities<dim>].value(i, q_point);
                 const double unfiltered_density_phi_i =
-                  fe_values[unfiltered_densities].value(i, q_point);
+                  fe_values[unfiltered_densities<dim>].value(i, q_point);
                 const double unfiltered_density_multiplier_phi_i =
-                  fe_values[unfiltered_density_multipliers].value(i, q_point);
+                  fe_values[unfiltered_density_multipliers<dim>].value(i,
+                                                                       q_point);
 
                 const double lower_slack_multiplier_phi_i =
-                  fe_values[density_lower_slack_multipliers].value(i, q_point);
+                  fe_values[density_lower_slack_multipliers<dim>].value(
+                    i, q_point);
 
                 const double lower_slack_phi_i =
-                  fe_values[density_lower_slacks].value(i, q_point);
+                  fe_values[density_lower_slacks<dim>].value(i, q_point);
 
                 const double upper_slack_phi_i =
-                  fe_values[density_upper_slacks].value(i, q_point);
+                  fe_values[density_upper_slacks<dim>].value(i, q_point);
 
                 const double upper_slack_multiplier_phi_i =
-                  fe_values[density_upper_slack_multipliers].value(i, q_point);
+                  fe_values[density_upper_slack_multipliers<dim>].value(
+                    i, q_point);
 
 
                 for (const auto j : fe_values.dof_indices())
                   {
                     const SymmetricTensor<2, dim> displacement_phi_j_symmgrad =
-                      fe_values[displacements].symmetric_gradient(j, q_point);
+                      fe_values[displacements<dim>].symmetric_gradient(j,
+                                                                       q_point);
                     const double displacement_phi_j_div =
-                      fe_values[displacements].divergence(j, q_point);
+                      fe_values[displacements<dim>].divergence(j, q_point);
 
                     const SymmetricTensor<2, dim>
                       displacement_multiplier_phi_j_symmgrad =
-                        fe_values[displacement_multipliers].symmetric_gradient(
-                          j, q_point);
+                        fe_values[displacement_multipliers<dim>]
+                          .symmetric_gradient(j, q_point);
                     const double displacement_multiplier_phi_j_div =
-                      fe_values[displacement_multipliers].divergence(j,
-                                                                     q_point);
+                      fe_values[displacement_multipliers<dim>].divergence(
+                        j, q_point);
 
                     const double density_phi_j =
-                      fe_values[densities].value(j, q_point);
+                      fe_values[densities<dim>].value(j, q_point);
 
                     const double unfiltered_density_phi_j =
-                      fe_values[unfiltered_densities].value(j, q_point);
+                      fe_values[unfiltered_densities<dim>].value(j, q_point);
                     const double unfiltered_density_multiplier_phi_j =
-                      fe_values[unfiltered_density_multipliers].value(j,
-                                                                      q_point);
+                      fe_values[unfiltered_density_multipliers<dim>].value(
+                        j, q_point);
 
 
                     const double lower_slack_phi_j =
-                      fe_values[density_lower_slacks].value(j, q_point);
+                      fe_values[density_lower_slacks<dim>].value(j, q_point);
 
                     const double upper_slack_phi_j =
-                      fe_values[density_upper_slacks].value(j, q_point);
+                      fe_values[density_upper_slacks<dim>].value(j, q_point);
 
                     const double lower_slack_multiplier_phi_j =
-                      fe_values[density_lower_slack_multipliers].value(j,
-                                                                       q_point);
+                      fe_values[density_lower_slack_multipliers<dim>].value(
+                        j, q_point);
 
                     const double upper_slack_multiplier_phi_j =
-                      fe_values[density_upper_slack_multipliers].value(j,
-                                                                       q_point);
+                      fe_values[density_upper_slack_multipliers<dim>].value(
+                        j, q_point);
 
                     // This is where the actual work starts. In
                     // the following, we will build all of the
@@ -1254,14 +1272,14 @@ namespace SAND
 
                         cell_rhs(i) +=
                           -1 *
-                          (traction *
-                           fe_face_values[displacements].value(i,
-                                                               face_q_point)) *
+                          (traction * fe_face_values[displacements<dim>].value(
+                                        i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
 
                         cell_rhs(i) +=
-                          (traction * fe_face_values[displacement_multipliers]
-                                        .value(i, face_q_point)) *
+                          (traction *
+                           fe_face_values[displacement_multipliers<dim>].value(
+                             i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
                       }
                   }
@@ -1441,25 +1459,6 @@ namespace SAND
     test_rhs.reinit(
       system_rhs); /* a zero vector with size and blocking of system_rhs */
 
-    const FEValuesExtractors::Scalar densities(
-      SolutionComponents::density<dim>);
-    const FEValuesExtractors::Vector displacements(
-      SolutionComponents::displacement<dim>);
-    const FEValuesExtractors::Scalar unfiltered_densities(
-      SolutionComponents::unfiltered_density<dim>);
-    const FEValuesExtractors::Vector displacement_multipliers(
-      SolutionComponents::displacement_multiplier<dim>);
-    const FEValuesExtractors::Scalar unfiltered_density_multipliers(
-      SolutionComponents::unfiltered_density_multiplier<dim>);
-    const FEValuesExtractors::Scalar density_lower_slacks(
-      SolutionComponents::density_lower_slack<dim>);
-    const FEValuesExtractors::Scalar density_lower_slack_multipliers(
-      SolutionComponents::density_lower_slack_multiplier<dim>);
-    const FEValuesExtractors::Scalar density_upper_slacks(
-      SolutionComponents::density_upper_slack<dim>);
-    const FEValuesExtractors::Scalar density_upper_slack_multipliers(
-      SolutionComponents::density_upper_slack_multiplier<dim>);
-
     const QGauss<dim>     quadrature_formula(fe.degree + 1);
     const QGauss<dim - 1> face_quadrature_formula(fe.degree + 1);
     FEValues<dim>         fe_values(fe,
@@ -1523,6 +1522,7 @@ namespace SAND
     std::vector<double> filter_adjoint_unfiltered_density_multiplier_values(
       n_q_points);
 
+    using namespace ValueExtractors;
     for (const auto &cell : dof_handler.active_cell_iterators())
       {
         cell_rhs = 0;
@@ -1534,36 +1534,37 @@ namespace SAND
         lambda.value_list(fe_values.get_quadrature_points(), lambda_values);
         mu.value_list(fe_values.get_quadrature_points(), mu_values);
 
-        fe_values[densities].get_function_values(test_solution,
-                                                 old_density_values);
-        fe_values[displacements].get_function_values(test_solution,
-                                                     old_displacement_values);
-        fe_values[displacements].get_function_divergences(
+        fe_values[densities<dim>].get_function_values(test_solution,
+                                                      old_density_values);
+        fe_values[displacements<dim>].get_function_values(
+          test_solution, old_displacement_values);
+        fe_values[displacements<dim>].get_function_divergences(
           test_solution, old_displacement_divs);
-        fe_values[displacements].get_function_symmetric_gradients(
+        fe_values[displacements<dim>].get_function_symmetric_gradients(
           test_solution, old_displacement_symmgrads);
-        fe_values[displacement_multipliers].get_function_values(
+        fe_values[displacement_multipliers<dim>].get_function_values(
           test_solution, old_displacement_multiplier_values);
-        fe_values[displacement_multipliers].get_function_divergences(
+        fe_values[displacement_multipliers<dim>].get_function_divergences(
           test_solution, old_displacement_multiplier_divs);
-        fe_values[displacement_multipliers].get_function_symmetric_gradients(
-          test_solution, old_displacement_multiplier_symmgrads);
-        fe_values[density_lower_slacks].get_function_values(
+        fe_values[displacement_multipliers<dim>]
+          .get_function_symmetric_gradients(
+            test_solution, old_displacement_multiplier_symmgrads);
+        fe_values[density_lower_slacks<dim>].get_function_values(
           test_solution, old_lower_slack_values);
-        fe_values[density_lower_slack_multipliers].get_function_values(
+        fe_values[density_lower_slack_multipliers<dim>].get_function_values(
           test_solution, old_lower_slack_multiplier_values);
-        fe_values[density_upper_slacks].get_function_values(
+        fe_values[density_upper_slacks<dim>].get_function_values(
           test_solution, old_upper_slack_values);
-        fe_values[density_upper_slack_multipliers].get_function_values(
+        fe_values[density_upper_slack_multipliers<dim>].get_function_values(
           test_solution, old_upper_slack_multiplier_values);
-        fe_values[unfiltered_densities].get_function_values(
+        fe_values[unfiltered_densities<dim>].get_function_values(
           test_solution, old_unfiltered_density_values);
-        fe_values[unfiltered_density_multipliers].get_function_values(
+        fe_values[unfiltered_density_multipliers<dim>].get_function_values(
           test_solution, old_unfiltered_density_multiplier_values);
-        fe_values[unfiltered_densities].get_function_values(
+        fe_values[unfiltered_densities<dim>].get_function_values(
           filtered_unfiltered_density_solution,
           filtered_unfiltered_density_values);
-        fe_values[unfiltered_density_multipliers].get_function_values(
+        fe_values[unfiltered_density_multipliers<dim>].get_function_values(
           filter_adjoint_unfiltered_density_multiplier_solution,
           filter_adjoint_unfiltered_density_multiplier_values);
 
@@ -1572,36 +1573,40 @@ namespace SAND
             for (const auto i : fe_values.dof_indices())
               {
                 const SymmetricTensor<2, dim> displacement_phi_i_symmgrad =
-                  fe_values[displacements].symmetric_gradient(i, q_point);
+                  fe_values[displacements<dim>].symmetric_gradient(i, q_point);
                 const double displacement_phi_i_div =
-                  fe_values[displacements].divergence(i, q_point);
+                  fe_values[displacements<dim>].divergence(i, q_point);
 
                 const SymmetricTensor<2, dim>
                   displacement_multiplier_phi_i_symmgrad =
-                    fe_values[displacement_multipliers].symmetric_gradient(
+                    fe_values[displacement_multipliers<dim>].symmetric_gradient(
                       i, q_point);
                 const double displacement_multiplier_phi_i_div =
-                  fe_values[displacement_multipliers].divergence(i, q_point);
+                  fe_values[displacement_multipliers<dim>].divergence(i,
+                                                                      q_point);
 
 
                 const double density_phi_i =
-                  fe_values[densities].value(i, q_point);
+                  fe_values[densities<dim>].value(i, q_point);
                 const double unfiltered_density_phi_i =
-                  fe_values[unfiltered_densities].value(i, q_point);
+                  fe_values[unfiltered_densities<dim>].value(i, q_point);
                 const double unfiltered_density_multiplier_phi_i =
-                  fe_values[unfiltered_density_multipliers].value(i, q_point);
+                  fe_values[unfiltered_density_multipliers<dim>].value(i,
+                                                                       q_point);
 
                 const double lower_slack_multiplier_phi_i =
-                  fe_values[density_lower_slack_multipliers].value(i, q_point);
+                  fe_values[density_lower_slack_multipliers<dim>].value(
+                    i, q_point);
 
                 const double lower_slack_phi_i =
-                  fe_values[density_lower_slacks].value(i, q_point);
+                  fe_values[density_lower_slacks<dim>].value(i, q_point);
 
                 const double upper_slack_phi_i =
-                  fe_values[density_upper_slacks].value(i, q_point);
+                  fe_values[density_upper_slacks<dim>].value(i, q_point);
 
                 const double upper_slack_multiplier_phi_i =
-                  fe_values[density_upper_slack_multipliers].value(i, q_point);
+                  fe_values[density_upper_slack_multipliers<dim>].value(
+                    i, q_point);
 
                 /* Equation 0: This equation, along with equations
                    1 and 2, are the variational derivatives of the
@@ -1724,14 +1729,14 @@ namespace SAND
 
                         cell_rhs(i) +=
                           -1 *
-                          (traction *
-                           fe_face_values[displacements].value(i,
-                                                               face_q_point)) *
+                          (traction * fe_face_values[displacements<dim>].value(
+                                        i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
 
                         cell_rhs(i) +=
-                          (traction * fe_face_values[displacement_multipliers]
-                                        .value(i, face_q_point)) *
+                          (traction *
+                           fe_face_values[displacement_multipliers<dim>].value(
+                             i, face_q_point)) *
                           fe_face_values.JxW(face_q_point);
                       }
                   }
@@ -1777,8 +1782,6 @@ namespace SAND
     // Start with computing the objective function:
     double objective_function_merit = 0;
     {
-      const FEValuesExtractors::Vector displacements(
-        SolutionComponents::displacement<dim>);
       const QGauss<dim>     quadrature_formula(fe.degree + 1);
       const QGauss<dim - 1> face_quadrature_formula(fe.degree + 1);
       FEValues<dim>         fe_values(fe,
@@ -1804,8 +1807,9 @@ namespace SAND
                   face->boundary_id() == BoundaryIds::down_force)
                 {
                   fe_face_values.reinit(cell, face);
-                  fe_face_values[displacements].get_function_values(
-                    test_solution, displacement_face_values);
+                  fe_face_values[ValueExtractors::displacements<dim>]
+                    .get_function_values(test_solution,
+                                         displacement_face_values);
                   for (unsigned int face_q_point = 0;
                        face_q_point < n_face_q_points;
                        ++face_q_point)
@@ -2619,6 +2623,5 @@ int main()
                 << std::endl;
       return 1;
     }
-
   return 0;
 }
