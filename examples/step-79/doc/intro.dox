@@ -589,7 +589,7 @@ Where $H$ is the hessian of the objective function, $x$ is a vector of our
 decision variables, $f$ is the objective function, and $c_i$ is the error on a
 current equality constraint.
 
-My use of this method is partially due to already having most of the necessary
+Our use of this method is partially due to already having most of the necessary
 parts calculated in finding the right hand side, but also the use of an exact
 merit function ensures that it is minimized in the same location as the overall
 problem. Recent research has shown that one can replace merit functions by what

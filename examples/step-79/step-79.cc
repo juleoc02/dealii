@@ -237,11 +237,16 @@ namespace SAND
   // The order in which these elements appear is documented above.
   template <int dim>
   SANDTopOpt<dim>::SANDTopOpt()
-    : fe(FE_DGQ<dim>(0) ^ 1,
-         (FESystem<dim>(FE_Q<dim>(1) ^ dim)) ^ 1,
-         FE_DGQ<dim>(0) ^ 1,
-         (FESystem<dim>(FE_Q<dim>(1) ^ dim)) ^ 1,
-         FE_DGQ<dim>(0) ^ 5)
+    : fe(FE_DGQ<dim>(0),
+         1,
+         (FESystem<dim>(FE_Q<dim>(1) ^ dim)),
+         1,
+         FE_DGQ<dim>(0),
+         1,
+         (FESystem<dim>(FE_Q<dim>(1) ^ dim)),
+         1,
+         FE_DGQ<dim>(0),
+         5)
     , dof_handler(triangulation)
     , density_ratio(.5)
     , density_penalty_exponent(3)
@@ -286,29 +291,15 @@ namespace SAND
             if (face->at_boundary())
               {
                 const auto center = face->center();
-                if (std::fabs(center(1) - 0) < 1e-12)
-                  {
-                    face->set_boundary_id(BoundaryIds::no_force);
-                  }
-                else if (std::fabs(center(1) - 1) < 1e-12)
+                if (std::fabs(center(1) - 1) < 1e-12)
                   {
                     if ((std::fabs(center(0) - 3) < .3))
-                      {
-                        face->set_boundary_id(BoundaryIds::down_force);
-                      }
+                      face->set_boundary_id(BoundaryIds::down_force);
                     else
-                      {
-                        face->set_boundary_id(BoundaryIds::no_force);
-                      }
+                      face->set_boundary_id(BoundaryIds::no_force);
                   }
-                else if (std::fabs(center(0) - 0) < 1e-12)
-                  {
-                    face->set_boundary_id(BoundaryIds::no_force);
-                  }
-                else if (std::fabs(center(0) - 6) < 1e-12)
-                  {
-                    face->set_boundary_id(BoundaryIds::no_force);
-                  }
+                else
+                  face->set_boundary_id(BoundaryIds::no_force);
               }
           }
       }
@@ -353,13 +344,13 @@ namespace SAND
                         if (std::fabs(vert(0) - 0) < 1e-12 &&
                             std::fabs(vert(1) - 0) < 1e-12)
                           {
-                            const unsigned int x_displacement =
+                            types::global_dof_index x_displacement =
                               cell->vertex_dof_index(vertex_number, 0);
-                            const unsigned int y_displacement =
+                            types::global_dof_index y_displacement =
                               cell->vertex_dof_index(vertex_number, 1);
-                            const unsigned int x_displacement_multiplier =
+                            types::global_dof_index x_displacement_multiplier =
                               cell->vertex_dof_index(vertex_number, 2);
-                            const unsigned int y_displacement_multiplier =
+                            types::global_dof_index y_displacement_multiplier =
                               cell->vertex_dof_index(vertex_number, 3);
 
                             boundary_values[x_displacement]            = 0;
@@ -371,9 +362,9 @@ namespace SAND
                         else if (std::fabs(vert(0) - 6) < 1e-12 &&
                                  std::fabs(vert(1) - 0) < 1e-12)
                           {
-                            const unsigned int y_displacement =
+                            types::global_dof_index y_displacement =
                               cell->vertex_dof_index(vertex_number, 1);
-                            const unsigned int y_displacement_multiplier =
+                            types::global_dof_index y_displacement_multiplier =
                               cell->vertex_dof_index(vertex_number, 3);
 
                             boundary_values[y_displacement]            = 0;
@@ -455,9 +446,6 @@ namespace SAND
           coupling[displacement<dim> + i][density<dim>] = DoFTools::always;
         }
 
-      coupling[density<dim>][unfiltered_density<dim>] = DoFTools::none;
-      coupling[unfiltered_density<dim>][density<dim>] = DoFTools::none;
-
       for (unsigned int i = 0; i < dim; ++i)
         {
           coupling[density<dim>][displacement_multiplier<dim> + i] =
@@ -471,34 +459,10 @@ namespace SAND
       coupling[unfiltered_density_multiplier<dim>][density<dim>] =
         DoFTools::always;
 
-
-      coupling[density<dim>][density_lower_slack<dim>] = DoFTools::none;
-      coupling[density<dim>][density_lower_slack_multiplier<dim>] =
-        DoFTools::none;
-      coupling[density<dim>][density_upper_slack<dim>] = DoFTools::none;
-      coupling[density<dim>][density_upper_slack_multiplier<dim>] =
-        DoFTools::none;
-      coupling[density_lower_slack<dim>][density<dim>] = DoFTools::none;
-      coupling[density_lower_slack_multiplier<dim>][density<dim>] =
-        DoFTools::none;
-      coupling[density_upper_slack<dim>][density<dim>] = DoFTools::none;
-      coupling[density_upper_slack_multiplier<dim>][density<dim>] =
-        DoFTools::none;
-
       /* Coupling for displacement */
 
       for (unsigned int i = 0; i < dim; ++i)
         {
-          for (unsigned int k = 0; k < dim; ++k)
-            {
-              coupling[displacement<dim> + i][displacement<dim> + k] =
-                DoFTools::none;
-            }
-          coupling[displacement<dim> + i][unfiltered_density<dim>] =
-            DoFTools::none;
-          coupling[unfiltered_density<dim>][displacement<dim> + i] =
-            DoFTools::none;
-
           for (unsigned int k = 0; k < dim; ++k)
             {
               coupling[displacement<dim> + i]
@@ -506,118 +470,22 @@ namespace SAND
               coupling[displacement_multiplier<dim> + k]
                       [displacement<dim> + i] = DoFTools::always;
             }
-
-          coupling[displacement<dim> + i][unfiltered_density_multiplier<dim>] =
-            DoFTools::none;
-          coupling[displacement<dim> + i][density_lower_slack<dim>] =
-            DoFTools::none;
-          coupling[displacement<dim> + i][density_lower_slack_multiplier<dim>] =
-            DoFTools::none;
-          coupling[displacement<dim> + i][density_upper_slack<dim>] =
-            DoFTools::none;
-          coupling[displacement<dim> + i][density_upper_slack_multiplier<dim>] =
-            DoFTools::none;
-
-          coupling[unfiltered_density_multiplier<dim>][displacement<dim> + i] =
-            DoFTools::none;
-          coupling[density_lower_slack<dim>][displacement<dim> + i] =
-            DoFTools::none;
-          coupling[density_lower_slack_multiplier<dim>][displacement<dim> + i] =
-            DoFTools::none;
-          coupling[density_upper_slack<dim>][displacement<dim> + i] =
-            DoFTools::none;
-          coupling[density_upper_slack_multiplier<dim>][displacement<dim> + i] =
-            DoFTools::none;
-        }
-
-      /* coupling for unfiltered density */
-      coupling[unfiltered_density<dim>][unfiltered_density<dim>] =
-        DoFTools::none;
-      for (unsigned int i = 0; i < dim; ++i)
-        {
-          coupling[unfiltered_density<dim>][displacement_multiplier<dim> + i] =
-            DoFTools::none;
-          coupling[displacement_multiplier<dim> + i][unfiltered_density<dim>] =
-            DoFTools::none;
-        }
-
-      coupling[unfiltered_density<dim>][3 + 2 * dim] = DoFTools::none;
-      coupling[3 + 2 * dim][unfiltered_density<dim>] = DoFTools::none;
-      coupling[unfiltered_density<dim>][4 + 2 * dim] = DoFTools::none;
-      coupling[4 + 2 * dim][unfiltered_density<dim>] = DoFTools::none;
-      coupling[unfiltered_density<dim>][5 + 2 * dim] = DoFTools::always;
-      coupling[5 + 2 * dim][unfiltered_density<dim>] = DoFTools::always;
-      coupling[unfiltered_density<dim>][6 + 2 * dim] = DoFTools::always;
-      coupling[6 + 2 * dim][unfiltered_density<dim>] = DoFTools::always;
-
-      /* Coupling for equality multipliers */
-      for (unsigned int i = 0; i < dim; ++i)
-        {
-          for (unsigned int k = 0; k < dim; ++k)
-            {
-              coupling[displacement_multiplier<dim> + i]
-                      [displacement_multiplier<dim> + k] = DoFTools::none;
-            }
-          coupling[displacement_multiplier<dim> + i]
-                  [unfiltered_density_multiplier<dim>] = DoFTools::none;
-          coupling[unfiltered_density_multiplier<dim>]
-                  [displacement_multiplier<dim> + i] = DoFTools::none;
-
-          coupling[displacement_multiplier<dim> + i][density_lower_slack<dim>] =
-            DoFTools::none;
-          coupling[displacement_multiplier<dim> + i]
-                  [density_lower_slack_multiplier<dim>] = DoFTools::none;
-          coupling[displacement_multiplier<dim> + i][density_upper_slack<dim>] =
-            DoFTools::none;
-          coupling[displacement_multiplier<dim> + i]
-                  [density_upper_slack_multiplier<dim>] = DoFTools::none;
-
-          coupling[density_lower_slack<dim>][displacement_multiplier<dim> + i] =
-            DoFTools::none;
-          coupling[density_lower_slack_multiplier<dim>]
-                  [displacement_multiplier<dim> + i] = DoFTools::none;
-          coupling[density_upper_slack<dim>][displacement_multiplier<dim> + i] =
-            DoFTools::none;
-          coupling[density_upper_slack_multiplier<dim>]
-                  [displacement_multiplier<dim> + i] = DoFTools::none;
         }
 
       /* Coupling for slack variables */
       coupling[density_lower_slack<dim>][density_lower_slack<dim>] =
         DoFTools::always;
-      coupling[density_lower_slack<dim>][density_lower_slack_multiplier<dim>] =
-        DoFTools::none;
       coupling[density_lower_slack<dim>][density_upper_slack<dim>] =
         DoFTools::always;
-      coupling[density_lower_slack<dim>][density_upper_slack_multiplier<dim>] =
-        DoFTools::none;
-      coupling[density_lower_slack_multiplier<dim>][density_lower_slack<dim>] =
-        DoFTools::none;
       coupling[density_upper_slack<dim>][density_lower_slack<dim>] =
         DoFTools::always;
-      coupling[density_upper_slack_multiplier<dim>][density_lower_slack<dim>] =
-        DoFTools::none;
 
       coupling[density_lower_slack_multiplier<dim>]
               [density_lower_slack_multiplier<dim>] = DoFTools::always;
-      coupling[density_lower_slack_multiplier<dim>][density_upper_slack<dim>] =
-        DoFTools::none;
       coupling[density_lower_slack_multiplier<dim>]
               [density_upper_slack_multiplier<dim>] = DoFTools::always;
-      coupling[density_upper_slack<dim>][density_lower_slack_multiplier<dim>] =
-        DoFTools::none;
       coupling[density_upper_slack_multiplier<dim>]
               [density_lower_slack_multiplier<dim>] = DoFTools::always;
-
-      coupling[density_upper_slack<dim>][density_upper_slack<dim>] =
-        DoFTools::none;
-      coupling[density_upper_slack<dim>][density_upper_slack_multiplier<dim>] =
-        DoFTools::none;
-      coupling[density_upper_slack_multiplier<dim>][density_upper_slack<dim>] =
-        DoFTools::none;
-
-      coupling[density_upper_slack_multiplier<dim>]
-              [density_upper_slack_multiplier<dim>] = DoFTools::none;
     }
 
     // Before we can create the sparsity pattern, we also have to
@@ -632,7 +500,7 @@ namespace SAND
     const IndexSet      density_dofs =
       DoFTools::extract_dofs(dof_handler, density_mask);
 
-    const unsigned int last_density_dof =
+    types::global_dof_index last_density_dof =
       density_dofs.nth_index_in_set(density_dofs.n_elements() - 1);
     constraints.clear();
     constraints.add_line(last_density_dof);
@@ -2244,7 +2112,7 @@ namespace SAND
                                                          cell->vertex(0)};
             const Tensor<2, dim> edge_tensor(
               {{edge_directions[0][0], edge_directions[0][1]},
-               {edge_directions[2][0], edge_directions[2][1]}});
+               {edge_directions[1][0], edge_directions[1][1]}});
             const bool is_right_handed_cell = (determinant(edge_tensor) > 0);
 
             if (is_right_handed_cell)

@@ -20,7 +20,7 @@ the structure. Because of the symmetry of the problem, it could be posed on a
 rectangle of width 3 and height 1 by cutting the original domain in half, and
 using zero Dirichlet boundary conditions in the $x$ direction along the cut
 edge, as shown in the figure below. That said, symmetry was nice to look for in
-debugging, so I solved the problem on the whole domain.
+debugging, so we solved the problem on the whole domain.
 
 
 <img src="https://www.dealii.org/images/steps/developer/step-6.mbbgeometry.png"
@@ -51,15 +51,15 @@ typically sees in other publications on the topic. Maybe more interestingly, the
 The results shown above took  around 75 iterations to find, which is quite
 concerning given the expense in solving the large linear systems in each
 iteration. Looking at the evolution, it does look as though the convergence has
-moments of happening quickly and moments of happening slowly. I believe this to
+moments of happening quickly and moments of happening slowly. we believe this to
 be due to both a lack of precision on when and how to decrease the boundary
-values, as well as my choice of merit function being sub-optimal. In the future,
+values, as well as our choice of merit function being sub-optimal. In the future,
  a LOQO barrier update replacing the monotone reduction, as well as a Markov
  Filter in place of a merit function will decrease the number of necessary
  iterations significantly.
 
 The barrier decrease is most sensitive in the middle of the convergence, which
-is problematic, as it seems like I need it to decrease quickly, then slowly,
+is problematic, as it seems like we need it to decrease quickly, then slowly,
 then quickly again.
 
 Secondly, the linear solver used here is just the sparse direct solver based on
