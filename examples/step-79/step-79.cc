@@ -785,14 +785,16 @@ namespace SAND
     system_rhs    = 0;
 
 
-
-    QGauss<dim>       quadrature_formula(fe.degree + 1);
-    QGauss<dim - 1>   face_quadrature_formula(fe.degree + 1);
-    FEValues<dim>     fe_values(fe,
+    MappingQGeneric<dim> mapping(1);
+    QGauss<dim>          quadrature_formula(fe.degree + 1);
+    QGauss<dim - 1>      face_quadrature_formula(fe.degree + 1);
+    FEValues<dim>        fe_values(mapping,
+                            fe,
                             quadrature_formula,
                             update_values | update_gradients |
                               update_quadrature_points | update_JxW_values);
-    FEFaceValues<dim> fe_face_values(fe,
+    FEFaceValues<dim>    fe_face_values(mapping,
+                                     fe,
                                      face_quadrature_formula,
                                      update_values | update_quadrature_points |
                                        update_normal_vectors |
@@ -1459,13 +1461,16 @@ namespace SAND
     test_rhs.reinit(
       system_rhs); /* a zero vector with size and blocking of system_rhs */
 
+    MappingQGeneric<dim>  mapping(1);
     const QGauss<dim>     quadrature_formula(fe.degree + 1);
     const QGauss<dim - 1> face_quadrature_formula(fe.degree + 1);
-    FEValues<dim>         fe_values(fe,
+    FEValues<dim>         fe_values(mapping,
+                            fe,
                             quadrature_formula,
                             update_values | update_gradients |
                               update_quadrature_points | update_JxW_values);
-    FEFaceValues<dim>     fe_face_values(fe,
+    FEFaceValues<dim>     fe_face_values(mapping,
+                                     fe,
                                      face_quadrature_formula,
                                      update_values | update_quadrature_points |
                                        update_normal_vectors |
@@ -1975,13 +1980,14 @@ namespace SAND
                                        const BlockVector<double> &max_step,
                                        const double descent_requirement)
   {
-    double step_size = 1;
-    for (unsigned int k = 0; k < 10; ++k)
+    const double merit_derivative =
+      (calculate_exact_merit(state + 1e-4 * max_step) -
+       calculate_exact_merit(state)) /
+      1e-4;
+    double       step_size                 = 1;
+    unsigned int max_linesearch_iterations = 10;
+    for (unsigned int k = 0; k < max_linesearch_iterations; ++k)
       {
-        const double merit_derivative =
-          (calculate_exact_merit(state + .0001 * max_step) -
-           calculate_exact_merit(state)) /
-          .0001;
         if (calculate_exact_merit(state + step_size * max_step) <
             calculate_exact_merit(state) +
               step_size * descent_requirement * merit_derivative)
@@ -2023,7 +2029,7 @@ namespace SAND
   // just the same as what was done in step-22, for example, just
   // with (a lot) more solution variables:
   template <int dim>
-  void SANDTopOpt<dim>::output_results(const unsigned int j) const
+  void SANDTopOpt<dim>::output_results(const unsigned int iteration) const
   {
     std::vector<std::string> solution_names(1, "density");
     std::vector<DataComponentInterpretation::DataComponentInterpretation>
@@ -2068,7 +2074,7 @@ namespace SAND
                              data_component_interpretation);
     data_out.build_patches();
 
-    std::ofstream output("solution" + std::to_string(j) + ".vtu");
+    std::ofstream output("solution" + std::to_string(iteration) + ".vtu");
     data_out.write_vtu(output);
   }
 
