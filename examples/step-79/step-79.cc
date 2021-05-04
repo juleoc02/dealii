@@ -55,7 +55,7 @@
 #include <fstream>
 #include <algorithm>
 
-// Above are fairly normal files to include.  These also include the
+// Above are fairly common files to include. These also include the
 // one for the sparse direct class SparseDirectUMFPACK. This is not
 // the most efficient way to solve large linear problems, but it will
 // do for now.
@@ -64,7 +64,7 @@
 // by declaring a number of symbolic names for constants that will be
 // used throughout this tutorial. Specifically, we have a *lot* of
 // variables in this program (of course the density and the displacement,
-// but also the unfiltered density and quite a number of Lagrange multipliers.
+// but also the unfiltered density and quite a number of Lagrange multipliers).
 // It is easy to forget which of these variables is at which position in
 // the solution vector, and trying to use numbers for these vector
 // components is a prescription for bugs. Rather, we define static
@@ -76,7 +76,7 @@
 // A similar issue arises with the ordering of blocks in the system
 // matrix and in vectors. The matrices have $9\times 9$ blocks, and
 // it's difficult to remember which is which. It is far easier to just
-// use symbolic names for those as well. The
+// use symbolic names for those as well.
 //
 // Finally, while we're at it, we introduce symbolic names also for
 // the boundary indicators we will use, in the same spirit as was done
@@ -252,11 +252,11 @@ namespace SAND
   };
 
 
-  // @sect3{Constructor and set up functions}
+  // @sect3{Constructor and set-up functions}
 
 
   // This problem has quite a lot of variables. We initialize a
-  // FESystem composed of 2×dim `FE_Q(1)` elements for the
+  // FESystem composed of 2$\times$dim `FE_Q(1)` elements for the
   // displacement variable and its Lagrange multiplier, and 7
   // `FE_DGQ(0)` elements.  These piecewise constant functions are
   // for density-related variables: the density itself, the
@@ -1387,7 +1387,7 @@ namespace SAND
   {
     double       fraction_to_boundary;
     const double min_fraction_to_boundary = .8;
-    const double max_fraction_to_boundary = .99999;
+    const double max_fraction_to_boundary = 1. - 1e-5;
 
     if (min_fraction_to_boundary < 1 - barrier_size)
       {
@@ -2484,7 +2484,7 @@ namespace SAND
             // unacceptable (as all of the watchdog steps above
             // were), then we discard all of the watchdog steps
             // taken above and start over again where we had
-            // started the watchdog iterations -- that places was
+            // started the watchdog iterations -- that place was
             // stored in the `watchdog_state` variable above. More
             // specifically, the conditions below first test
             // whether we take a step from `watchdog_state` in

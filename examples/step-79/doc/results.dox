@@ -51,7 +51,7 @@ typically sees in other publications on the topic. Maybe more interestingly, the
 The results shown above took  around 75 iterations to find, which is quite
 concerning given the expense in solving the large linear systems in each
 iteration. Looking at the evolution, it does look as though the convergence has
-moments of happening quickly and moments of happening slowly. we believe this to
+moments of happening quickly and moments of happening slowly. We believe this to
 be due to both a lack of precision on when and how to decrease the boundary
 values, as well as our choice of merit function being sub-optimal. In the future,
  a LOQO barrier update replacing the monotone reduction, as well as a Markov
