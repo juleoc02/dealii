@@ -6,13 +6,13 @@ structure that is bearing some load. Ideally, we would like to minimize the
 maximum stress placed on a structure by selecting a region $E$ where material is
 placed. In other words,
 @f[
-  \text{Minimize}\norm{\sigma (\textbf{u}) }_\infty
+  \text{Minimize}\norm{\boldsymbol{\sigma} (\textbf{u}) }_\infty
 @f]
 @f[
   \text{subject to } |E|\leq V_{\max},
 @f]
 @f[
-  \text{and } \nabla \cdot \sigma +\textbf{ F} = 0.
+  \text{and } \nabla \cdot \boldsymbol{\sigma} +\textbf{ F} = \mathbf{0}.
 @f]
 Here, $\sigma=C\varepsilon(\mathbf u)$ is the stress within the body that is
 caused by the external forces $\mathbf F$, where we have for simplicity assumed
@@ -23,7 +23,7 @@ step-8 and step-17 for more on linear elasticity. In the formulation above,
 $V_\text{max}$ is the maximal amount of material we are willing to provide to
 build the object. The last of the constraints is the partial differential
 equation that relates stress $\sigma$ and forces $\mathbf F$ and is simply the
-stead-state force balance.
+steady-state force balance.
 
 That said, the infinity norm above creates a problem: As a function of location
 of material, this objective function is necessarily not differentiable, making
@@ -31,7 +31,7 @@ prospects of optimization rather bleak. So instead, a common approach in
 topology optimization is to find an approximate solution by optimizing a related
 problem: We would like to minimize the strain energy, or compliance. This is a
 measure of the potential energy stored in an object due to its deformation, but
-also works as a measure of total displacement over the structure.
+also works as a measure of total deformation over the structure.
 
 @f[
   \text{Minimize  } \int_E \frac{1}{2}\sigma : \epsilon
@@ -40,7 +40,7 @@ also works as a measure of total displacement over the structure.
   \text{subject to } \norm{E}\leq V_{\max}
 @f]
 @f[
-  \text{and } \nabla \cdot \sigma + \textbf{F} = 0
+  \text{and } \nabla \cdot \boldsymbol{\sigma} + \textbf{F} = \mathbf{0}
 @f]
 
 The value of the objective function is calculated using a finite element method,
@@ -57,7 +57,7 @@ the optimization problem becomes combinatorial, and very expensive to solve.
 Instead, we use an approach called Solid Isotropic Material with Penalization,
 or SIMP. @cite Bendse2004
 
-The SIMP method is based off of an idea of allowing the material to exist in a
+The SIMP method is based on an idea of allowing the material to exist in a
 location with a density $\rho$ between 0 and 1. A density of 0 suggests the
 material is not there, and it is not a part of the structure, while a density of
 1 suggests the material is present. Values between 0 and 1 do not reflect
@@ -68,20 +68,20 @@ typically chosen to be around $10^{-3}$, avoids the possibility of having an
 infinite compliance, but is small enough to provide accurate results.
 
 The straightforward application of the effect of this "density" on the
-elasticity of the media would be to simply multiply the stiffness tensor $C_0$
+elasticity of the media would be to simply multiply the stiffness tensor $\mathbf{C}_0$
 of the medium by the given density, that is, $C = \rho C_0$. However, this
 approach often gives optimal solutions where density values are far from both 0
 and 1. As one wants to find a real-world solution, meaning the material either
 is present or it is not, a penalty is applied to these in-between values. A
 simple and effective way to do this is to multiply the stiffness tensor by the
 density raised to some integer power penalty parameter $p$, so that
-$C = \rho^p C_0$. This makes density values farther away from 0 or 1 less
+$\mathbf{C} = \rho^p \mathbf{C}_0$. This makes density values farther away from 0 or 1 less
 effective. It has been shown that using $p=3$ is sufficiently high to create
 'black-and-white' solutions: that is, one gets optimal solutions in which
 material is either present or not present at all points.
 
 More material should always provide a less compliant structure, and so the
-inequality constraint can be viewed as an equality, where the total volume used
+inequality constraint can be viewed as an equality where the total volume used
 is the maximum volume.
 
 Using this density idea also allows us to reframe the volume constraint on the
@@ -107,30 +107,30 @@ $\sigma$ and $\epsilon$ given the density $\rho$.
 <h3>Elasticity Equation</h3>
 The elasticity equation in the time independent limit reads
 @f[
-  \nabla \cdot \sigma + \textbf{F} = 0.
+  \nabla \cdot \boldsymbol{\sigma} + \textbf{F} = \mathbf{0}.
 @f]
 In the situations we will care about, we will assume that the medium is linear
 and in that case, we have that
 @f[
-  \sigma = C \varepsilon = \rho^p C_0 \varepsilon(\mathbf u)
-   = \rho^p C_0 \left[\frac 12 (\nabla \mathbf u + \nabla \mathbf u^T) \right],
+  \boldsymbol{\sigma} = \mathbf{C} : \boldsymbol{\varepsilon} = \rho^p \mathbf{C}_0 : \boldsymbol{\varepsilon}(\mathbf u)
+   = \rho^p \mathbf{C}_0 : \left[\frac 12 (\nabla \mathbf u + \nabla \mathbf u^T) \right],
 @f]
 and in everything we will do below, we will always consider the displacement
 field $\mathbf u$ as the only solution variable, rather than considering
-$\mathbf u$ and $\sigma$ as solution variables (as is done in mixed
+$\mathbf u$ and $\boldsymbol{\sigma}$ as solution variables (as is done in mixed
 formulations).
 
 Furthermore, we will make the assumption that the material is linear isotropic,
 in which case the stress-strain tensor can be expressed in terms of the Lam\'{e}
  parameters $\lambda,\mu$ such that
 @f[
-  \sigma = \rho^p (\lambda tr(\epsilon) I + 2 \mu \epsilon)
+  \boldsymbol{\sigma} = \rho^p (\lambda \text{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2 \mu \boldsymbol{\varepsilon})
 @f]
 @f[
   \sigma_{i,j} = \rho^p (\lambda  \epsilon_{k,k} \delta_{i,j}
   + 2 \mu \epsilon_{i,j})
 @f]
-see step-8 for how this transformation works.
+See step-8 for how this transformation works.
 
 Integrating the objective function by parts, along with using the elasticity
 equation constraint, gives a simplification of the objective problem as follows:
@@ -203,12 +203,12 @@ The minimization problem is now
 @f]
 
 The inequality constraints are dealt with by first introducing slack variables,
-and second using a log barriers to ensure that we obtain an interior-point
+and second using log barriers to ensure that we obtain an interior-point
 method. The penalty parameter is going to be $\alpha$, and the following slack
-variables
+variables are
 <ol>
     <li> $s_1$ - a slack variable corresponding to the lower bound</li>
-    <li> $s_2$ - a slack variable corresponding to the upper bound</li>
+    <li> $s_2$ - a slack variable corresponding to the upper bound.</li>
 </ol>
 This now gives the following problem:
 @f[
@@ -244,8 +244,8 @@ constrained optimization problems: We introduce a Lagrangian in which we combine
     elasticity constraint </li>
     <li> $y_2$ - a Lagrange multiplier corresponding to the convolution
     filter constraint </li>
-    <li> $z_1$ - a Lagrange multiplier corresponding to the lower slack </li>
-    <li> $z_2$ - a Lagrange multiplier corresponding to the upper slack </li>
+    <li> $z_1$ - a Lagrange multiplier corresponding to the lower slack variable </li>
+    <li> $z_2$ - a Lagrange multiplier corresponding to the upper slack variable. </li>
 </ol>
 With these variables, the Lagrangian function reads as follows:
 
@@ -259,7 +259,7 @@ With these variables, the Lagrangian function reads as follows:
 @f}
 
 The solution of the optimization problem then needs to satisfy what are known as
- the Karush-Kuhn-Tucker (KKT) conditions: The derivatives of the Lagrangian with
+ the [Karush-Kuhn-Tucker (KKT) conditions](https://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions): The derivatives of the Lagrangian with
   respect to all of its arguments need to be equal to zero, and because we have
   inequality constraints, we also have "complementarity" conditions. Since we
   here have an infinite-dimensional problem, these conditions all involve
@@ -276,7 +276,7 @@ approximation of the original problem.
 
 In the following, let us state all of these conditions where
 $d_{\{\cdot\}}$ is a test function that is naturally paired with variational
-derivatives of the lagrangian with respect to the $\{\cdot\}$ function.
+derivatives of the Lagrangian with respect to the $\{\cdot\}$ function.
 <ol>
 <li> Stationarity:
 @f[
@@ -299,8 +299,8 @@ derivatives of the lagrangian with respect to the $\{\cdot\}$ function.
 <li> Primal Feasibility:
     @f[
       \int_\Omega \rho^{p}\lambda (\nabla \cdot \mathbf d_{\textbf{y}_1})
-      (\nabla \cdot \textbf{u}) +  \rho^{p}\mu  \varepsilon(\mathbf
-      d_{\textbf{y}_1}) : \varepsilon(\textbf{u}) - \int_\Gamma \mathbf
+      (\nabla \cdot \textbf{u}) +  \rho^{p}\mu  \boldsymbol{\varepsilon}(\mathbf
+      d_{\textbf{y}_1}) : \boldsymbol{\varepsilon}(\textbf{u}) - \int_\Gamma \mathbf
       d_{\textbf{y}_1} \cdot \textbf{t} =0 \;\;\forall \textbf{d}_{\textbf{y}_1}
     @f]
     @f[
@@ -427,7 +427,7 @@ Equation 3
 
     Dual Feasibility - Multiplier on slacks and slack variables must be kept
     greater than 0. (This is the only part not implemented in the
-    "assemble\_block\_system()" function)
+    SANDTopOpt::assemble_system() function)
     @f[
       s,z \geq 0
     @f]
@@ -437,7 +437,7 @@ Equation 3
 
 
 <h3>Discretization</h3>
-We use a quadrilateral mesh with $Q_1$ element to discretize the displacement and
+We use a quadrilateral mesh with $Q_1$ elements to discretize the displacement and
  displacement Lagrange multiplier. Piecewise constant $DGQ_0$ elements are used
  to discretize the density, unfiltered density, density slack variables, and
  multipliers for the slack variables and filter constraint.
@@ -459,25 +459,25 @@ While most of the discussion above follows traditional and well-known approaches
  worse, either by leading to a point that has a worse objective function or at
  which the constraints are satisfied less well than they are at $x_k$.
 
-Very complex algorithms have been proposed to deal with this issue.
-@cite Nocedal2009 @cite Wchter2005 Here, we implement a watchdog-search
-algorithm.@cite Nocedal2006 When discussing this algorithm, we will use the
+Very complex algorithms have been proposed to deal with this issue
+@cite Nocedal2009 @cite Waechter2005. Here, we implement a watchdog-search
+algorithm @cite Nocedal2006. When discussing this algorithm, we will use the
 vector $\textbf{x}$ to represent all primal variables - the filtered and
 unfiltered densities, slack variables and displacement - and use the vector
-$\textbf{y}$ to represent all of the dual vectors. The solution to the Newton
-System above will now be referred to as $\Delta \textbf{x}$ and $\Delta
+$\textbf{y}$ to represent all of the dual vectors. The (incremental) solution to the nonlinear
+system of equations stated above will now be referred to as $\Delta \textbf{x}$ and $\Delta
 \textbf{y}$ instead of $c_{\{\cdot\}}$. A merit function is referred to here as
-$\phi(\textbf{x,\textbf{y}})$
+$\phi(\textbf{x,\textbf{y}})$.
 
 The watchdog algorithm applied to a subproblem with a given barrier parameter
 works in the following way: First, the current iteration is saved as a
 "watchdog" state, and the merit of the watchdog state is recorded.
-A maximal feasibel newton step is then taken. If the merit sufficiently
+A maximal feasible Newton step is then taken. If the merit sufficiently
 decreased from the first step, this new step is accepted. If not, another
-maximal feasible newton step is taken, and the merit is again compared to the
+maximal feasible Newton step is taken, and the merit is again compared to the
 watchdog merit.
-If after some number (typically betwteen 5 and 8) of newton steps, the merit did
- not adequately decrease, the algorithm takes a scaled newton step from either
+If after some number (typically betwteen 5 and 8) of Newton steps, the merit did
+ not adequately decrease, the algorithm takes a scaled Newton step from either
  the watchdog state or the last iteration that guarantees
 a sufficient decrease of the merit, and that step is accepted. Once a step is
 accepted, the norm of the KKT error is measured, and if it is sufficiently
@@ -486,7 +486,7 @@ last accepted step is taken to be the new watchdog step, and the process is
 repeated.
 
 
-Above, the ``maximal feasible step" is a scaling of the newton step in both the
+Above, the ``maximal feasible step" is a scaling of the Newton step in both the
 primal and dual variables given by
 
 @f[
@@ -502,11 +502,11 @@ primal and dual variables given by
 
 Above, $\zeta$ is the "fraction to boundary" that is allowed on any step.
 Because the derivatives become ill-conditioned near the boundary, this technique
- stands in for a trust region and is necessary to ensure good approximations in
- the future. $\zeta$ is taken to be $\max\{.8, 1-\alpha\}$, which allows
+ stands in for a [trust region](https://en.wikipedia.org/wiki/Trust_region) and is necessary to ensure good approximations in
+ the future. $\zeta$ is taken to be $\max\{0.8, 1-\alpha\}$, which allows
  movement closer to the boundary as the barrier becomes smaller. In the future,
  when implementing the LOQO algorithm for barrier reduction, this must be kept
- to .8 as the barrier parameter can vary wildly.
+ to 0.8 as the barrier parameter can vary wildly.
 
 Separately, we need to deal with the log-barrier that we have used to enforce
 the positivity constraint on the slack variables $s_1,s_2$: In the statement of
@@ -529,21 +529,21 @@ whenever some level of convergence is achieved at the current barrier parameter.
  $\norm{KKT}_{l_\infty} < c \cdot \alpha$ where $c$ is a constant over any
  barrier size and $\alpha$ is the barrier parameter. This forces better
  convergence in later iterations, and is the same requirement as is used in
- IPOPT.
+[IPOPT](https://coin-or.github.io/Ipopt/) (an open source software package for large-scale nonlinear optimization).
 
 Here, the barrier is reduced linearly at larger values, and superlinearly at
-smaller values. At larger values, it is multiplied by a constant (around .6),
+smaller values. At larger values, it is multiplied by a constant (around 0.6),
 and at lower values the barrier value is replaced by the barrier value raised
 to some exponent (around 1.2). This method has proven to be effective at keeping
  the subproblem solvable at large barrier values, while still allowing
  superlinear convergence at smaller barrier values.
 @f[
-  \alpha_{k+1} = \min\{\alpha_k^{1.2},.6\alpha_k\}
+  \alpha_{k+1} = \min\{\alpha_k^{1.2},0.6\alpha_k\}
 @f]
 
 While taking large steps at reducing the barrier size when convergence is
-reached is widely used, more recent research has shown that it typically faster
-to use algorithms that adaptively update barrier each iteration, i.e., in which
+reached is widely used, more recent research has shown that it is typically faster
+to use algorithms that adaptively update barrier each iteration, i.e., methods in which
 we use concrete criteria at the end of each iteration to determine what the
 penalty parameter should be in the next iteration, rather than using reduction
 factors that are independent of the current solution. That said, such methods
@@ -554,8 +554,8 @@ are also more complicated and we will not do this here.
 The algorithm outlined above makes use of a "merit function". Merit functions
 are used to determine whether a step from $x_k$ to a proposed point $x_{k+1}$ is
  beneficial. In unconstrained optimization problems, one can simply check this
- with the object function we try to minimize, and typically uses conditions such
-  as the Wolfe and Goldstein conditions.
+ with the objective function we try to minimize, and typically uses conditions such
+  as the [Wolfe and Goldstein conditions](https://en.wikipedia.org/wiki/Wolfe_conditions).
 
 In constrained optimization problems, the question is how to balance reduction
 in the objective function against a possible increase in the violation of
@@ -564,10 +564,10 @@ further away from the set of points that satisfy the constraints -- or the other
  way around. This trade-off is typically resolved by using a merit function that
   combines the two criteria.
 
-Here, we use an exact $l_1$ merit function to test the steps.
+Here, we use an exact $l_1$ merit function to test the steps:
 @f{multiline}{
   \phi(\textbf{x},\textbf{y}) = \int_{\partial \Omega} \textbf{u}\cdot
-  \textbf{t} - \alpha \int_\Omega (log(s_1) + log(s_2)) + p \sum_i\left|
+  \textbf{t} - \alpha \int_\Omega (\log(s_1) + \log(s_2)) + p \sum_i\left|
   \int_\Omega y_{2,i}(H(\sigma) - \rho) \right|
 \\
 + p \sum_i\left| \int_{\partial \Omega} \textbf{y}_{1,i}\cdot \textbf{t}  -
@@ -583,9 +583,9 @@ there exists some $p_0$ so that for any $p > p_0$, the merit function has its
 minima at the same location as the original problem. This penalty parameter is
 updated (by recommendation of Nocedal and Wright @cite Benson2002) as follows:
 @f[
-  p > \frac{.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}
+  p > \frac{0.5 x^T H x - x^t\nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}
 @f]
-Where $H$ is the hessian of the objective function, $x$ is a vector of our
+Where $H$ is the Hessian of the objective function, $x$ is a vector of our
 decision variables, $f$ is the objective function, and $c_i$ is the error on a
 current equality constraint.
 
