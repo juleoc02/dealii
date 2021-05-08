@@ -326,7 +326,7 @@
  *   <tr valign="top">
  *       <td>step-27</td>
  *       <td> The hp-finite element method.
- *       <br/> Keywords: hp::DoFHandler, hp::FECollection, hp::QCollection,
+ *       <br/> Keywords: hp::FECollection, hp::QCollection, hp::Refinement,
  *       FESeries::Fourier, Triangulation::create_triangulation()
  *       </td></tr>
  *
@@ -598,9 +598,39 @@
  *       </td></tr>
  *
  *   <tr valign="top">
+ *       <td>step-71</td>
+ *       <td> Constitutive modelling: a demonstration of how automatic and symbolic 
+ *       differentiation can be used to rapidly implement a complex coupled constitutive
+ *       law.
+ *       <br/> Keywords: Automatic differentiation, Symbolic differentiation, 
+ *       Constitutive modelling
+ *       </td></tr>
+ *
+ *   <tr valign="top">
+ *       <td>step-72</td>
+ *       <td> A nonlinear elliptic problem: The minimal surface equation.
+ *       Newton's method. Using automatic differentiation to linearize the 
+ *       residual, or to compute the full linear system from an energy
+ *       functional.
+ *       <br/> Keywords: Automatic differentiation, MeshWorker::mesh_loop()
+ *       </td></tr>
+ *
+ *   <tr valign="top">
  *       <td>step-74</td>
  *       <td> The Symmetric interior penalty Galerkin (SIPG) method for Poisson's equation.
  *       <br/> Keywords: MeshWorker::mesh_loop(), FEInterfaceValues, ConvergenceTable
+ *       </td></tr>
+ *
+ *   <tr valign="top">
+ *       <td>step-76</td>
+ *       <td> Like step-67, but for demonstrating MPI-3.0 shared-memory features.
+ *       <br/> Keywords: MatrixFree, MatrixFree::cell_loop()
+ *       </td></tr>
+ *
+ *   <tr valign="top">
+ *       <td>step-77</td>
+ *       <td> The nonlinear minimal surface equation revisited.
+ *       Interfacing with SUNDIALS' KINSOL nonlinear solver.
  *       </td></tr>
  *
  *   <tr valign="top">
@@ -714,7 +744,9 @@
  *       step-42,
  *       step-43,
  *       step-50,
- *       step-55
+ *       step-55,
+ *       step-71,
+ *       step-72
  *     </td>
  *   </tr>
  *
@@ -792,7 +824,9 @@
  *       step-60,
  *       step-62,
  *       step-69,
- *       step-70
+ *       step-70,
+ *       step-71,
+ *       step-72
  *     </td>
  *   </tr>
  *
@@ -871,9 +905,13 @@
  *   </tr>
  *
  *   <tr valign="top">
- *     <td> Computing Jacobians from residuals, automatic differentiation
+ *     <td> Computing Jacobians from residuals, automatic and symbolic differentiation
  *     </td>
- *     <td>step-33</td>
+ *     <td>
+ *       step-33,
+ *       step-71,
+ *       step-72
+ *     </td>
  *   </tr>
  *
  *   <tr valign="top">

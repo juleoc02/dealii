@@ -169,7 +169,7 @@ public:
    * cell is a pyramid), or with FE_WedgeP (if the reference cell is
    * a wedge).
    */
-  template <int dim, int spacedim>
+  template <int dim, int spacedim = dim>
   std::unique_ptr<Mapping<dim, spacedim>>
   get_default_mapping(const unsigned int degree) const;
 
@@ -184,7 +184,7 @@ public:
    * understood as $d$-linear (i.e., bilinear or trilinear) for some of the
    * coordinate directions.
    */
-  template <int dim, int spacedim>
+  template <int dim, int spacedim = dim>
   const Mapping<dim, spacedim> &
   get_default_linear_mapping() const;
 
@@ -467,6 +467,12 @@ public:
    */
   unsigned int
   exodusii_face_to_deal_face(const unsigned int face_n) const;
+
+  /**
+   * Map a UNV vertex number to a deal.II vertex number.
+   */
+  unsigned int
+  unv_vertex_to_deal_vertex(const unsigned int vertex_n) const;
 
   /**
    * Return a VTK linear shape constant that corresponds to the reference cell.

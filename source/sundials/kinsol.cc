@@ -160,7 +160,7 @@ namespace SUNDIALS
 
 
 
-#  if DEAL_II_SUNDIALS_VERSION_LT(5, 0, 0)
+#  if DEAL_II_SUNDIALS_VERSION_LT(4, 1, 0)
     template <typename VectorType>
     int
     setup_jacobian_callback(KINMem kinsol_mem)
@@ -266,7 +266,7 @@ namespace SUNDIALS
                                  SUNMatrix /*ignored*/,
                                  N_Vector x,
                                  N_Vector b,
-                                 realtype /*tol*/)
+                                 realtype tol)
     {
       // Receive the object that describes the linear solver and
       // unpack the pointer to the KINSOL object from which we can then
@@ -274,30 +274,59 @@ namespace SUNDIALS
       const KINSOL<VectorType> &solver =
         *static_cast<const KINSOL<VectorType> *>(LS->content);
 
-      // Allocate temporary (deal.II-type) vectors into which to copy the
-      // N_vectors
-      GrowingVectorMemory<VectorType>            mem;
-      typename VectorMemory<VectorType>::Pointer src_ycur(mem);
-      typename VectorMemory<VectorType>::Pointer src_fcur(mem);
-      typename VectorMemory<VectorType>::Pointer src_b(mem);
-      typename VectorMemory<VectorType>::Pointer dst_x(mem);
+      // This is where we have to make a decision about which of the two
+      // signals to call. Let's first check the more modern one:
+      if (solver.solve_with_jacobian)
+        {
+          // Allocate temporary (deal.II-type) vectors into which to copy the
+          // N_vectors
+          GrowingVectorMemory<VectorType>            mem;
+          typename VectorMemory<VectorType>::Pointer src_b(mem);
+          typename VectorMemory<VectorType>::Pointer dst_x(mem);
 
-      solver.reinit_vector(*src_b);
-      solver.reinit_vector(*dst_x);
+          solver.reinit_vector(*src_b);
+          solver.reinit_vector(*dst_x);
 
-      copy(*src_b, b);
+          copy(*src_b, b);
 
-      // Call the user-provided setup function with these arguments. Note
-      // that Sundials 4.x and later no longer provide values for
-      // src_ycur and src_fcur, and so we simply pass dummy vector in.
-      // These vectors will have zero lengths because we don't reinit them
-      // above.
-      const int err =
-        solver.solve_jacobian_system(*src_ycur, *src_fcur, *src_b, *dst_x);
+          const int err = solver.solve_with_jacobian(*src_b, *dst_x, tol);
 
-      copy(x, *dst_x);
+          copy(x, *dst_x);
 
-      return err;
+          return err;
+        }
+      else
+        {
+          // User has not provided the modern callback, so the fact that we are
+          // here means that they must have given us something for the old
+          // signal. Check this.
+          Assert(solver.solve_jacobian_system, ExcInternalError());
+
+          // Allocate temporary (deal.II-type) vectors into which to copy the
+          // N_vectors
+          GrowingVectorMemory<VectorType>            mem;
+          typename VectorMemory<VectorType>::Pointer src_ycur(mem);
+          typename VectorMemory<VectorType>::Pointer src_fcur(mem);
+          typename VectorMemory<VectorType>::Pointer src_b(mem);
+          typename VectorMemory<VectorType>::Pointer dst_x(mem);
+
+          solver.reinit_vector(*src_b);
+          solver.reinit_vector(*dst_x);
+
+          copy(*src_b, b);
+
+          // Call the user-provided setup function with these arguments. Note
+          // that Sundials 4.x and later no longer provide values for
+          // src_ycur and src_fcur, and so we simply pass dummy vector in.
+          // These vectors will have zero lengths because we don't reinit them
+          // above.
+          const int err =
+            solver.solve_jacobian_system(*src_ycur, *src_fcur, *src_b, *dst_x);
+
+          copy(x, *dst_x);
+
+          return err;
+        }
     }
 
 #  endif
@@ -428,16 +457,29 @@ namespace SUNDIALS
     SUNMatrix       J  = nullptr;
     SUNLinearSolver LS = nullptr;
 
-    if (solve_jacobian_system) // user assigned a function object to the solver
-                               // slot
+    if (solve_jacobian_system ||
+        solve_with_jacobian) // user assigned a function object to the solver
+                             // slot
       {
-#  if DEAL_II_SUNDIALS_VERSION_LT(5, 0, 0)
+/* interface up to and including 4.0 */
+#  if DEAL_II_SUNDIALS_VERSION_LT(4, 1, 0)
         auto KIN_mem        = static_cast<KINMem>(kinsol_mem);
         KIN_mem->kin_lsolve = solve_with_jacobian_callback<VectorType>;
         if (setup_jacobian) // user assigned a function object to the Jacobian
           // set-up slot
           KIN_mem->kin_lsetup = setup_jacobian_callback<VectorType>;
-#  else
+
+/* interface up to and including 4.1 */
+#  elif DEAL_II_SUNDIALS_VERSION_LT(5, 0, 0)
+
+        // deal.II does not currently have support for KINSOL in
+        // SUNDIALS 4.1. One could write this and update this section,
+        // but it does not seem worthwhile spending the time to
+        // interface with an old version of SUNDIAL given that the
+        // code below supports modern SUNDIAL versions just fine.
+        Assert(false, ExcNotImplemented());
+
+#  else /* interface starting with SUNDIALS 5.0 */
         // Set the operations we care for in the sun_linear_solver object
         // and attach it to the KINSOL object. The functions that will get
         // called do not actually receive the KINSOL object, just the LS
