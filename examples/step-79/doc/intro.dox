@@ -14,7 +14,7 @@ placed. In other words,
 @f[
   \text{and } \nabla \cdot \boldsymbol{\sigma} +\textbf{ F} = \mathbf{0}.
 @f]
-Here, $\sigma=C\varepsilon(\mathbf u)$ is the stress within the body that is
+Here, $\boldsymbol{\sigma}=C\varepsilon(\mathbf u)$ is the stress within the body that is
 caused by the external forces $\mathbf F$, where we have for simplicity assumed
 that the material is linear-elastic and so $C$ is the stress-strain tensor and
 $\varepsilon(\mathbf u)=\frac 12 (\nabla \mathbf u + \nabla\mathbf u^T)$ is the
@@ -22,19 +22,19 @@ small-deformation strain as a function of the displacement $\mathbf u$ -- see
 step-8 and step-17 for more on linear elasticity. In the formulation above,
 $V_\text{max}$ is the maximal amount of material we are willing to provide to
 build the object. The last of the constraints is the partial differential
-equation that relates stress $\sigma$ and forces $\mathbf F$ and is simply the
+equation that relates stress $\boldsymbol{\sigma}$ and forces $\mathbf F$ and is simply the
 steady-state force balance.
 
 That said, the infinity norm above creates a problem: As a function of location
 of material, this objective function is necessarily not differentiable, making
 prospects of optimization rather bleak. So instead, a common approach in
 topology optimization is to find an approximate solution by optimizing a related
-problem: We would like to minimize the strain energy, or compliance. This is a
+problem: We would like to minimize the strain energy. This is a
 measure of the potential energy stored in an object due to its deformation, but
 also works as a measure of total deformation over the structure.
 
 @f[
-  \text{Minimize  } \int_E \frac{1}{2}\sigma : \epsilon
+  \text{Minimize  } \int_E \frac{1}{2}\boldsymbol{\sigma} : \boldsymbol{\varepsilon}
 @f]
 @f[
   \text{subject to } \norm{E}\leq V_{\max}
@@ -60,16 +60,17 @@ or SIMP. @cite Bendse2004
 The SIMP method is based on an idea of allowing the material to exist in a
 location with a density $\rho$ between 0 and 1. A density of 0 suggests the
 material is not there, and it is not a part of the structure, while a density of
-1 suggests the material is present. Values between 0 and 1 do not reflect
-real-world phenomena, but allow us to turn the combinatorial problem into a
-continuous one. One then looks at density values $\rho$, with the constraint
-that $0 < \rho_{\min} \leq \rho \leq 1$. The minimum value $\rho_{\min}$,
-typically chosen to be around $10^{-3}$, avoids the possibility of having an
-infinite compliance, but is small enough to provide accurate results.
+1 suggests the material is present. Values between 0 and 1 do not reflect a
+design we can create in the real-world, but allow us to turn the combinatorial
+problem into a continuous one. One then looks at density values $\rho$,
+with the constraint that $0 < \rho_{\min} \leq \rho \leq 1$. The minimum value
+$\rho_{\min}$, typically chosen to be around $10^{-3}$, avoids the possibility
+of having an infinite strain energy, but is small enough to provide accurate
+results.
 
 The straightforward application of the effect of this "density" on the
 elasticity of the media would be to simply multiply the stiffness tensor $\mathbf{C}_0$
-of the medium by the given density, that is, $C = \rho C_0$. However, this
+of the medium by the given density, that is, $\mathbf{C} = \rho \mathbf{C}_0$. However, this
 approach often gives optimal solutions where density values are far from both 0
 and 1. As one wants to find a real-world solution, meaning the material either
 is present or it is not, a penalty is applied to these in-between values. A
@@ -80,7 +81,7 @@ effective. It has been shown that using $p=3$ is sufficiently high to create
 'black-and-white' solutions: that is, one gets optimal solutions in which
 material is either present or not present at all points.
 
-More material should always provide a less compliant structure, and so the
+More material should always provide a structure with a lower strain energy, and so the
 inequality constraint can be viewed as an equality where the total volume used
 is the maximum volume.
 
@@ -89,7 +90,7 @@ optimization problem. Use of SIMP then turns the optimization problem into the
 following:
 
 @f[
-  \text{Minimize  } \int_\Omega \frac{1}{2}\sigma(\rho) : \epsilon(\rho)
+  \text{Minimize  } \int_\Omega \frac{1}{2}\boldsymbol{\sigma}(\rho) : \boldsymbol{\varepsilon}(\rho)
 @f]
 @f[
   \text{subject to } \int_\Omega \rho(x) = V_{\max},
@@ -98,10 +99,10 @@ following:
   0<\rho_{\min}\leq \rho(x) \leq 1,
 @f]
 @f[
-  \nabla \cdot \sigma(\rho) + \mathbf{F} = 0
+  \nabla \cdot \boldsymbol{\sigma}(\rho) + \mathbf{F} = 0 \quad \text{on } \Omega
 @f]
-The final constraint, the elasticity equation, gives a method for finding
-$\sigma$ and $\epsilon$ given the density $\rho$.
+The final constraint, the balance of linear momentum given by the elasticity equation,
+ gives a method for finding $\boldsymbol{\sigma}$ and $\boldsymbol{\varepsilon}$ given the density $\rho$.
 
 
 <h3>Elasticity Equation</h3>
@@ -127,44 +128,46 @@ in which case the stress-strain tensor can be expressed in terms of the Lam\'{e}
   \boldsymbol{\sigma} = \rho^p (\lambda \text{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2 \mu \boldsymbol{\varepsilon})
 @f]
 @f[
-  \sigma_{i,j} = \rho^p (\lambda  \epsilon_{k,k} \delta_{i,j}
-  + 2 \mu \epsilon_{i,j})
+  \sigma\_{i,j} = \rho^p (\lambda  \varepsilon_{k,k} \delta_{i,j}
+  + 2 \mu \varepsilon_{i,j})
 @f]
 See step-8 for how this transformation works.
 
 Integrating the objective function by parts, along with using the elasticity
 equation constraint, gives a simplification of the objective problem as follows:
 
+Integration by parts of the objective function gives
 @f[
-  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) +
-  \int_\Omega (\nabla \cdot \sigma(\rho)) \cdot \textbf{u} =
-  \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}
+  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) d\Omega+
+  \int_\Omega (\nabla \cdot \sigma(\rho)) \cdot \textbf{u}d\Omega =
+  \int_{\partial \Omega} \textbf{t} \cdot \textbf{u} d\partial\Omega.
 @f]
 
+The linear elasticity equation can then be substituted into the objective function, giving
 @f[
-  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla u)^T) =
-  \int_\Omega \textbf{F}\cdot \textbf{u} +
-  \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}
+  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla u)^T) d\Omega =
+  \int_\Omega \textbf{F}\cdot \textbf{u} d\Omega +
+  \int_{\partial \Omega} \textbf{t} \cdot \textbf{u} d\partial\Omega
 @f]
 
-Because we are assuming no internal forces, this simplifies all the way to
+Because we are assuming no body forces, this simplifies all the way to
 
 @f[
-  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T)
-  = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u}
+  \int_\Omega \sigma(\rho) : (\nabla \textbf{u} + (\nabla \textbf{u})^T) d\Omega
+  = \int_{\partial \Omega} \textbf{t} \cdot \textbf{u} d\partial\Omega
 @f]
 
 <h3>Making the solution mesh-independent</h3>
 
-Typically, the solutions to topology optimization problems are not
-mesh-independent, and as such the problem is ill-posed. This is because as the
-mesh is refined further, fractal structures are often formed. As the mesh gains
+Typically, the solutions to topology optimization problems are
+mesh-dependent, and as such the problem is ill-posed. This is because
+fractal structures are often formed as the mesh is refined further. As the mesh gains
 resolution, the optimal solution typically gains smaller and smaller structures.
 There are a few competing work-arounds to this issue, but the most popular for
 first order optimization is the sensitivity filter, while second order
 optimization methods tend to prefer use of a density filter.
 
-As the filters affect the gradient and Hessian of the compliance (i.e., the
+As the filters affect the gradient and Hessian of the strain energy (i.e., the
 objective function), the choice of filter has an effect on the solution of the
 problem. The density filter as part of a second order method works by
 introducing an unfiltered density, which we refer to as $\sigma$, and then
@@ -184,19 +187,19 @@ find.
 
 The minimization problem is now
 @f[
-  \min_{\rho,\sigma,\mathbf u} \int_{\partial\Omega} \textbf{u} \cdot \textbf{t}
+  \min_{\rho,\sigma,\mathbf u} \int_{\partial\Omega} \textbf{u} \cdot \textbf{t} d\partial\Omega
 @f]
 @f[
-  \text{s.t.   } \rho = H(\sigma)
+  \text{subject to   } \rho = H(\sigma)
 @f]
 @f[
-  \int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{v}):
-  \epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla
-  \cdot \textbf{v} \right)  \right) = \int_{\partial \Omega} \textbf{v} \cdot
-  \textbf{t}
+  \int_\Omega \rho^p \left(\frac{\mu}{2}\left(\varepsilon(\textbf{v}):
+  \varepsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla
+  \cdot \textbf{v} \right)  \right) d\Omega = \int_{\partial \Omega} \textbf{v} \cdot
+  \textbf{t} d\partial\Omega
 @f]
 @f[
-  \int_\Omega \rho = V
+  \int_\Omega \rho d\Omega= V
 @f]
 @f[
   0\leq \sigma \leq 1
@@ -213,19 +216,19 @@ variables are
 This now gives the following problem:
 @f[
   \min_{\rho,\sigma,\mathbf u, s_1, s_2} \int_{\partial\Omega} \textbf{u} \cdot
-  \textbf{t} - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right)
+  \textbf{t} d\partial\Omega- \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right) d\Omega
 @f]
 @f[
-  \text{s.t.   } \rho = H(\sigma)
+  \text{subject to   } \rho = H(\sigma)
 @f]
 @f[
-  \int_\Omega \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{v}):
-  \epsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla
-  \cdot \textbf{v} \right)  \right) = \int_{\partial \Omega} \textbf{v} \cdot
-  \textbf{t}
+  \int_\Omega \rho^p \left(\frac{\mu}{2}\left(\varepsilon(\textbf{v}):
+  \varepsilon(\textbf{u})) \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla
+  \cdot \textbf{v} \right)  \right) d\Omega = \int_{\partial \Omega} \textbf{v} \cdot
+  \textbf{t} d\partial\Omega
 @f]
 @f[
-  \int_\Omega \rho = V
+  \int_\Omega \rho d\Omega = V
 @f]
 @f[
   \sigma = s_1
@@ -250,12 +253,13 @@ constrained optimization problems: We introduce a Lagrangian in which we combine
 With these variables, the Lagrangian function reads as follows:
 
 @f{multiline}{
-  \mathcal{L} = \int_{\partial\Omega} \textbf{u} \cdot \textbf{t}
-   - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right) -  \left(\int_\Omega
-   \rho^p \left(\frac{\mu}{2}\left(\epsilon(\textbf{y}_1):\epsilon(\textbf{u}))
+  \mathcal{L} = \int_{\partial\Omega} \textbf{u} \cdot \textbf{t} d\partial\Omega
+   - \alpha \int_\Omega \left(\log(s_1) + \log(s_2)\right) d\Omega - \left( \int_\Omega
+   \rho^p \left(\frac{\mu}{2}\left(\varepsilon(\textbf{y}_1):\varepsilon(\textbf{u}))
    \right) + \lambda \left( \nabla \cdot \textbf{u} \nabla \cdot \textbf{y}_1
-   \right)  \right)- \int_{\partial \Omega} \textbf{y}_1 \cdot \textbf{t}\right)
-   \\- y_2 (\rho - H(\sigma)) - z_1 (\sigma-s_1) - z_2 (1 - s_2 -\sigma)
+   \right)  \right) d\Omega- \int_{\partial \Omega} \textbf{y}_1 \cdot \textbf{t} d\partial\Omega\right)
+   \\- \int_\Omega y_2 (\rho - H(\sigma))d\Omega - \int_\Omega z_1 (\sigma-s_1)
+   d\Omega- \int_\Omega z_2 (1 - s_2 -\sigma)d\Omega
 @f}
 
 The solution of the optimization problem then needs to satisfy what are known as
@@ -277,22 +281,24 @@ approximation of the original problem.
 In the following, let us state all of these conditions where
 $d_{\{\cdot\}}$ is a test function that is naturally paired with variational
 derivatives of the Lagrangian with respect to the $\{\cdot\}$ function.
+For simplicity, we introduce $\Gamma$ to indicate the portion of the boundary
+where forces are applied, and Neumann boundary conditions are used.
 <ol>
 <li> Stationarity:
 @f[
   \int_\Omega  - d_\rho y_2 + p\rho^{p-1}d_\rho \left[\lambda
   (\nabla \cdot \textbf{y}_1) (\nabla \cdot \textbf{u}) +
-  \mu \varepsilon(\textbf{u}):\varepsilon(\textbf{y}_1)\right]=0\;\;
+  \mu \varepsilon(\textbf{u}):\varepsilon(\textbf{y}_1)\right] d\Omega=0\;\;
   \forall d_\rho
 @f]
 @f[
-  \int_\Gamma \mathbf d_\textbf{u} \cdot \textbf{t} + \int_\Omega p\rho^{p}
+  \int_\Gamma \mathbf d_\textbf{u} \cdot \textbf{t}  d\partial\Omega+ \int_\Omega p\rho^{p}
   \left[\lambda (\nabla \cdot \mathbf d_\textbf{u})( \nabla \cdot \textbf{y}_1)
-  + \mu \varepsilon(\mathbf d_\textbf{u}):\varepsilon(\textbf{y}_1)\right]=0\;\;
+  + \mu \varepsilon(\mathbf d_\textbf{u}):\varepsilon(\textbf{y}_1)\right]  d\Omega=0\;\;
   \forall \textbf{d}_\textbf{u}
 @f]
 @f[
-  \int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2 = 0\;\;\forall
+  \int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2  d\Omega= 0\;\;\forall
   d_\sigma
 @f]
 </li>
@@ -300,26 +306,26 @@ derivatives of the Lagrangian with respect to the $\{\cdot\}$ function.
     @f[
       \int_\Omega \rho^{p}\lambda (\nabla \cdot \mathbf d_{\textbf{y}_1})
       (\nabla \cdot \textbf{u}) +  \rho^{p}\mu  \boldsymbol{\varepsilon}(\mathbf
-      d_{\textbf{y}_1}) : \boldsymbol{\varepsilon}(\textbf{u}) - \int_\Gamma \mathbf
-      d_{\textbf{y}_1} \cdot \textbf{t} =0 \;\;\forall \textbf{d}_{\textbf{y}_1}
+      d_{\textbf{y}_1}) : \boldsymbol{\varepsilon}(\textbf{u})  d\Omega - \int_\Gamma \mathbf
+      d_{\textbf{y}_1} \cdot \textbf{t}  d\partial\Omega =0 \;\;\forall \textbf{d}_{\textbf{y}_1}
     @f]
     @f[
-      \int_\Omega d_{z_1}(\sigma - s_1) = 0\;\;\forall d_{z_1}
+      \int_\Omega d_{z_1}(\sigma - s_1) d\Omega = 0\;\;\forall d_{z_1}
     @f]
     @f[
-      \int_\Omega d_{z_z}(1-\sigma-s_2) = 0\;\;\forall d_{z_2}
+      \int_\Omega d_{z_z}(1-\sigma-s_2) d\Omega = 0\;\;\forall d_{z_2}
     @f]
     @f[
-      \int_\Omega d_{y_2}(\rho - H(\sigma)) = 0\;\;\forall d_{y_2}
+      \int_\Omega d_{y_2}(\rho - H(\sigma)) d\Omega = 0\;\;\forall d_{y_2}
     @f]
 </li>
 <li>Complementary Slackness:
     @f[
-      \int_\Omega d_{s_1}(s_1z_1 - \alpha) = 0 \;\;\forall d_{s_1} ,\;\;\;
+      \int_\Omega d_{s_1}(s_1z_1 - \alpha) d\Omega = 0 \;\;\forall d_{s_1} ,\;\;\;
       \alpha \to 0
     @f]
     @f[
-      \int_\Omega d_{s_2}(s_2z_2 - \alpha) = 0  \;\;\forall d_{s_2} ,\;\;\;
+      \int_\Omega d_{s_2}(s_2z_2 - \alpha) d\Omega = 0  \;\;\forall d_{s_2} ,\;\;\;
       \alpha \to 0
     @f]
 </li>
@@ -354,10 +360,10 @@ Equation 0
   \textbf{c}_{\textbf{y}_1} \nabla \cdot \textbf{u} +   \mu  \varepsilon
   (\textbf{u}) \varepsilon(\textbf{c}_{\textbf{y}_1})]  +  p \rho^{p-1} d_\rho
   [\lambda \nabla \cdot {\textbf{y}_1} \nabla \cdot \textbf{c}_\textbf{u} +
-  \mu  \varepsilon(\textbf{c}_\textbf{u}) \varepsilon(\textbf{y}_1)]
+  \mu  \varepsilon(\textbf{c}_\textbf{u}) \varepsilon(\textbf{y}_1)]  d\Omega
  \\=-\int_\Omega -d_\rho z_1 + d_\rho z_2 - d_\rho y_2 + p\rho^{p-1}d_\rho
 [\lambda \nabla \cdot \textbf{y}_1 \nabla \cdot \textbf{u} + \mu \varepsilon
-(\textbf{u})\varepsilon(\textbf{y}_1)]
+(\textbf{u})\varepsilon(\textbf{y}_1)] d\Omega
 @f}
 
 Equation 1
@@ -366,16 +372,17 @@ Equation 1
   \cdot \textbf{d}_\textbf{u} +  \mu  \varepsilon(\textbf{d}_\textbf{u})
   \varepsilon(\textbf{y})] + \rho^{p} [\lambda \nabla \cdot
   \textbf{c}_{\textbf{y}_1} \nabla \cdot \textbf{d}_\textbf{u} +  \mu
-  \varepsilon(\textbf{d}_\textbf{u})\varepsilon(\textbf{c}_{\textbf{y}_1})]
+  \varepsilon(\textbf{d}_\textbf{u})\varepsilon(\textbf{c}_{\textbf{y}_1})]  d\Omega
 \\
-=-\int_\Gamma \textbf{d}_\textbf{u} \cdot \textbf{t} -\int_\Omega \rho^{p}
+=-\int_\Gamma \textbf{d}_\textbf{u} \cdot \textbf{t}  d\partial\Omega -\int_\Omega \rho^{p}
 [\lambda \nabla \cdot \textbf{y} \nabla \cdot \textbf{d}_\textbf{u} + \mu
-\varepsilon(d_\textbf{u})\varepsilon(\textbf{y}_1)]
+\varepsilon(d_\textbf{u})\varepsilon(\textbf{y}_1)] d\Omega
 @f}
+
 Equation 2
 @f[
-  \int_\Omega  - d_\sigma c_{z_1} +d_\sigma c_{z_2}  + H(d_\sigma)c_{y_2} =
-  -\int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2
+  \int_\Omega  - d_\sigma c_{z_1} +d_\sigma c_{z_2}  + H(d_\sigma)c_{y_2} d\Omega =
+  -\int_\Omega -d_\sigma z_1 + d_\sigma z_2 + H(d_\sigma)y_2 d\Omega
 @f]
 </li>
 <li> Primal Feasibility - these equations ensure the equality constraints
@@ -387,45 +394,47 @@ Equation 3
 \varepsilon(\textbf{u}) \varepsilon(\textbf{d}_{\textbf{y}_1})] +
 \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla \cdot
 \textbf{c}_\textbf{u} +  \mu  \varepsilon(\textbf{c}_\textbf{u})
-\varepsilon(\textbf{d}_{\textbf{y}_1})]
+\varepsilon(\textbf{d}_{\textbf{y}_1})] d\Omega
 \\
  =-\int_\Omega \rho^{p}[\lambda \nabla \cdot \textbf{d}_{\textbf{y}_1} \nabla
  \cdot \textbf{u} + \mu  \varepsilon(\textbf{u}) \varepsilon
- (\textbf{d}_{\textbf{y}_1})]  + \int_\Gamma  \textbf{d}_{\textbf{y}_1}
- \cdot \textbf{t}
+ (\textbf{d}_{\textbf{y}_1})] d\Omega + \int_\Gamma  \textbf{d}_{\textbf{y}_1}
+ \cdot \textbf{t}  d\partial\Omega
 @f}
 
     Equation 4
 @f[
-  -\int_\Omega d_{z_1}(c_\sigma - c_{s_1})=\int_\Omega d_{z_1} (\sigma - s_1)
+  -\int_\Omega d_{z_1}(c_\sigma - c_{s_1}) d\Omega=\int_\Omega d_{z_1} (\sigma - s_1)  d\Omega
 @f]
 
     Equation 5
 @f[
-  -\int_\Omega d_{z_2}(-c_\sigma-c_{s_2}) = \int_\Omega d_{z_2} (1-\sigma-s_2)
+  -\int_\Omega d_{z_2}(-c_\sigma-c_{s_2})  d\Omega= \int_\Omega d_{z_2} (1-\sigma-s_2)  d\Omega
 @f]
 
     Equation 6
 @f[
-  -\int_\Omega   d_{y_2}(c_\rho - H(c_\sigma))=\int_\Omega d_{y_2}
-  (\rho - H(\sigma))
+  -\int_\Omega   d_{y_2}(c_\rho - H(c_\sigma)) d\Omega =\int_\Omega d_{y_2}
+  (\rho - H(\sigma)) d\Omega
 @f]
   <\li>
   <li>Complementary Slackness - these equations essentially ensure the barrier
   is met - in the final solution, we need $s^T z = 0$
+
     Equation 7
     @f[
-      \int_\Omega d_{s_1}(c_{s_1}z_1/s_1 +  c_{z_1} )=-\int_\Omega d_{s_1}
-      (z_1 - \alpha/s_1) ,\;\;\; \alpha \to 0
+      \int_\Omega d_{s_1}(c_{s_1}z_1/s_1 +  c_{z_1} ) d\Omega=-\int_\Omega d_{s_1}
+      (z_1 - \alpha/s_1) d\Omega ,\;\;\; \alpha \to 0
     @f]
 
     Equation 8
     @f[
-      \int_\Omega d_{s_2} (c_{s_2}z_2/s_2 + c_{z_2} )=-\int_\Omega d_{s_2}
-      (z_2 - \alpha/s_2) ,\;\;\; \alpha \to 0
+      \int_\Omega d_{s_2} (c_{s_2}z_2/s_2 + c_{z_2} ) d\Omega=-\int_\Omega d_{s_2}
+      (z_2 - \alpha/s_2)  d\Omega,\;\;\; \alpha \to 0
     @f]
+    </li>
 
-    Dual Feasibility - Multiplier on slacks and slack variables must be kept
+    <li>Dual Feasibility - Multiplier on slacks and slack variables must be kept
     greater than 0. (This is the only part not implemented in the
     SANDTopOpt::assemble_system() function)
     @f[
@@ -448,7 +457,7 @@ While most of the discussion above follows traditional and well-known approaches
  to solving nonlinear optimization problems, it turns out that the problem is
  actually quite difficult to solve in practice. In particular, it is quite
  nonlinear and an important question is not just to find search directions
- $c_\bullet$ as discussed above based on a Newton method, but that one needs to
+ $c_{\cdot}$ as discussed above based on a Newton method, but that one needs to
  spend quite a lot of attention to how far one wants to go in this direction.
  This is often called ``line search" and comes down to the question of how to
  choose the step length $\alpha_k \in (0,1]$ so that we move from the current
@@ -466,8 +475,8 @@ vector $\textbf{x}$ to represent all primal variables - the filtered and
 unfiltered densities, slack variables and displacement - and use the vector
 $\textbf{y}$ to represent all of the dual vectors. The (incremental) solution to the nonlinear
 system of equations stated above will now be referred to as $\Delta \textbf{x}$ and $\Delta
-\textbf{y}$ instead of $c_{\{\cdot\}}$. A merit function is referred to here as
-$\phi(\textbf{x,\textbf{y}})$.
+\textbf{y}$ instead of $c_{\{\cdot\}}$. A merit function (explained in more detail later)
+is referred to here as $\phi(\textbf{x,\textbf{y}})$.
 
 The watchdog algorithm applied to a subproblem with a given barrier parameter
 works in the following way: First, the current iteration is saved as a
@@ -512,7 +521,7 @@ Separately, we need to deal with the log-barrier that we have used to enforce
 the positivity constraint on the slack variables $s_1,s_2$: In the statement of
 the final optimization problem we solve, we have added the term
 @f[
-  -\alpha \int_\Omega (\log(s_1) + \log(s_2)).
+  -\alpha \int_\Omega (\log(s_1) + \log(s_2)) d\Omega.
 @f]
 The question is how we should choose the penalty factor $\alpha$. As with all
 penalty methods, we are in reality only interested in the limit as
@@ -567,15 +576,15 @@ further away from the set of points that satisfy the constraints -- or the other
 Here, we use an exact $l_1$ merit function to test the steps:
 @f{multiline}{
   \phi(\textbf{x},\textbf{y}) = \int_{\partial \Omega} \textbf{u}\cdot
-  \textbf{t} - \alpha \int_\Omega (\log(s_1) + \log(s_2)) + p \sum_i\left|
-  \int_\Omega y_{2,i}(H(\sigma) - \rho) \right|
+  \textbf{t}  d\Omega - \alpha \int_\Omega (\log(s_1) + \log(s_2)) d\Omega + p \sum_i\left|
+  \int_\Omega y_{2,i}(H(\sigma) - \rho) d\Omega \right|
 \\
-+ p \sum_i\left| \int_{\partial \Omega} \textbf{y}_{1,i}\cdot \textbf{t}  -
++ p \sum_i\left| \int_{\partial \Omega} \textbf{y}_{1,i}\cdot \textbf{t} d\Omega  -
 \int_\Omega \rho^p[\lambda \nabla \cdot \textbf{u} \nabla \cdot \textbf{y}_{1,i}
- + \mu \varepsilon{\textbf{u}}\varepsilon{\textbf{y}_{1,i}}]\right|
+ + \mu \varepsilon{\textbf{u}}\varepsilon{\textbf{y}_{1,i}}] d\Omega\right|
 \\
-+ p \sum_i\left| \int_\Omega z_{1,i}(s_1 - \sigma) \right|+ p \sum_i\left|
-\int_\Omega z_{2,i}(1-\sigma - s_2) \right|
++ p \sum_i\left| \int_\Omega z_{1,i}(s_1 - \sigma) d\Omega \right|+ p \sum_i\left|
+\int_\Omega z_{2,i}(1-\sigma - s_2)  d\Omega\right|
 @f}
 
 Here, $p$ is a penalty parameter. This merit function being exact means that
