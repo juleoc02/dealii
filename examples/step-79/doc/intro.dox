@@ -184,6 +184,9 @@ This prevents checkerboarding; the radius of the filter allows the user to
 define an effective minimal beam width for the optimal structures we seek to
 find.
 
+<img src="https://www.dealii.org/images/steps/developer/step-79.checkerboard.png"
+alt="Checkerboarding occurring in an MBB Beam">
+
 <h3>Complete Problem Formulation</h3>
 
 The minimization problem is now
@@ -355,7 +358,7 @@ Here, variational derivatives with respect to the $\{\bullet\}$ variable are tak
 <li> Stationarity - these equations ensure we are at a critical point of the
 objective function when constrained
 
-Equation 0
+Equation 1
 @f{multiline}{
   \int_\Omega-d_\rho c_{y_2} + p(p-1) \rho^{p-2} d_\rho c_\rho [\lambda \nabla
   \cdot \mathbf{y}_1 \nabla \cdot \mathbf{u} +  \mu  \boldsymbol{\varepsilon}(\mathbf{u})
@@ -370,7 +373,7 @@ Equation 0
 (\mathbf{u})\boldsymbol{\varepsilon}(\mathbf{y}_1)] d\Omega
 @f}
 
-Equation 1
+Equation 2
 @f{multiline}{
   \int_\Omega p \rho^{p-1} c_\rho [\lambda \nabla \cdot {\mathbf{y}_1} \nabla
   \cdot \mathbf{d}_\mathbf{u} +  \mu  \boldsymbol{\varepsilon}(\mathbf{d}_\mathbf{u})
@@ -383,7 +386,7 @@ Equation 1
 \boldsymbol{\varepsilon}(d_\mathbf{u})\boldsymbol{\varepsilon}(\mathbf{y}_1)] d\Omega
 @f}
 
-Equation 2
+Equation 3
 @f[
   \int_\Omega  - d_\varrho c_{z_1} +d_\varrho c_{z_2}  + H(d_\varrho)c_{y_2}  d\Omega =
   -\int_\Omega -d_\varrho z_1 + d_\varrho z_2 + H(d_\varrho)y_2 d\Omega 
@@ -392,7 +395,7 @@ Equation 2
 <li> Primal Feasibility - these equations ensure the equality constraints
 are met.
 
-Equation 3
+Equation 4
 @f{multiline}{\int_\Omega p \rho^{p-1} c_p[\lambda \nabla \cdot
 \mathbf{d}_{\mathbf{y}_1} \nabla \cdot \mathbf{u} +  \mu
 \boldsymbol{\varepsilon}(\mathbf{u}) \boldsymbol{\varepsilon}(\mathbf{d}_{\mathbf{y}_1})] +
@@ -406,17 +409,17 @@ Equation 3
  \cdot \mathbf{t} d\partial\Omega
 @f}
 
-    Equation 4
+    Equation 5
 @f[
   -\int_\Omega d_{z_1}(c_\varrho - c_{s_1}) d\Omega=\int_\Omega d_{z_1} (\varrho - s_1) d\Omega
 @f]
 
-    Equation 5
+    Equation 6
 @f[
   -\int_\Omega d_{z_2}(-c_\varrho-c_{s_2}) d\Omega= \int_\Omega d_{z_2} (1-\varrho-s_2) d\Omega
 @f]
 
-    Equation 6
+    Equation 7
 @f[
   -\int_\Omega   d_{y_2}(c_\rho - H(c_\varrho)) d\Omega=\int_\Omega d_{y_2}
   (\rho - H(\varrho)) d\Omega
@@ -425,13 +428,13 @@ Equation 3
   <li>Complementary Slackness - these equations essentially ensure the barrier
   is met - in the final solution, we need $s^T z = 0$
 
-    Equation 7
+    Equation 8
     @f[
       \int_\Omega d_{s_1}(c_{s_1}z_1/s_1 +  c_{z_1} ) d\Omega=-\int_\Omega d_{s_1}
       (z_1 - \alpha/s_1) d\Omega ,\;\;\; \alpha \to 0
     @f]
 
-    Equation 8
+    Equation 9
     @f[
       \int_\Omega d_{s_2} (c_{s_2}z_2/s_2 + c_{z_2} ) d\Omega=-\int_\Omega d_{s_2}
       (z_2 - \alpha/s_2)  d\Omega,\;\;\; \alpha \to 0

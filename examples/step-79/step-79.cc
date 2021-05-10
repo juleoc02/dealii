@@ -953,7 +953,7 @@ namespace SAND
                     // each individual equation are given with the computations
                     // of the right hand side.
 
-                    /* Equation 0 */
+                    /* Equation 1 */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
                             (
@@ -994,7 +994,7 @@ namespace SAND
                                        (old_displacement_multiplier_symmgrads[q_point] *
                                         displacement_phi_j_symmgrad)));
 
-                    /* Equation 1 */
+                    /* Equation 2 */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
                             (density_penalty_exponent *
@@ -1017,7 +1017,7 @@ namespace SAND
 
                             );
 
-                    /* Equation 2, which has to do with the filter and which is
+                    /* Equation 3, which has to do with the filter and which is
                      * calculated elsewhere. */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
@@ -1026,7 +1026,7 @@ namespace SAND
                              unfiltered_density_phi_i * upper_slack_multiplier_phi_j);
 
 
-                    /* Equation 3: Primal feasibility */
+                    /* Equation 4: Primal feasibility */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
                             (
@@ -1051,25 +1051,25 @@ namespace SAND
                                        (displacement_phi_j_symmgrad *
                                         displacement_multiplier_phi_i_symmgrad)));
 
-                    /* Equation 4: Primal feasibility */
+                    /* Equation 5: Primal feasibility */
                     cell_matrix(i, j) +=
                             -1 * fe_values.JxW(q_point) *
                             lower_slack_multiplier_phi_i *
                             (unfiltered_density_phi_j - lower_slack_phi_j);
 
-                    /* Equation 5: Primal feasibility */
+                    /* Equation 6: Primal feasibility */
                     cell_matrix(i, j) +=
                             -1 * fe_values.JxW(q_point) *
                             upper_slack_multiplier_phi_i *
                             (-1 * unfiltered_density_phi_j - upper_slack_phi_j);
 
-                    /* Equation 6: Primal feasibility - the part with the filter
+                    /* Equation 7: Primal feasibility - the part with the filter
                      * is added later */
                     cell_matrix(i, j) += -1 * fe_values.JxW(q_point) *
                                          unfiltered_density_multiplier_phi_i *
                                          (density_phi_j);
 
-                    /* Equation 7: Complementary slackness */
+                    /* Equation 8: Complementary slackness */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
                             (lower_slack_phi_i * lower_slack_multiplier_phi_j
@@ -1078,7 +1078,7 @@ namespace SAND
                                old_lower_slack_multiplier_values[q_point] /
                                old_lower_slack_values[q_point]);
 
-                    /* Equation 8: Complementary slackness */
+                    /* Equation 9: Complementary slackness */
                     cell_matrix(i, j) +=
                             fe_values.JxW(q_point) *
                             (upper_slack_phi_i * upper_slack_multiplier_phi_j
@@ -1421,8 +1421,8 @@ namespace SAND
                   fe_values[density_upper_slack_multipliers<dim>].value(
                     i, q_point);
 
-                /* Equation 0: This equation, along with equations
-                   1 and 2, are the variational derivatives of the
+                /* Equation 1: This equation, along with equations
+                   2 and 3, are the variational derivatives of the
                    lagrangian with respect to the decision
                    variables - the density, displacement, and
                    unfiltered density. */
@@ -1441,7 +1441,7 @@ namespace SAND
                    density_phi_i *
                      old_unfiltered_density_multiplier_values[q_point]);
 
-                /* Equation 1; the boundary terms will be added further down
+                /* Equation 2; the boundary terms will be added further down
                  * below. */
                 cell_rhs(i) +=
                   -1 * fe_values.JxW(q_point) *
@@ -1453,7 +1453,7 @@ namespace SAND
                       (old_displacement_multiplier_symmgrads[q_point] *
                        displacement_phi_i_symmgrad)));
 
-                /* Equation 2 */
+                /* Equation 3 */
                 cell_rhs(i) +=
                   -1 * fe_values.JxW(q_point) *
                   (unfiltered_density_phi_i *
@@ -1466,7 +1466,7 @@ namespace SAND
 
 
 
-                /* Equation 3; boundary term will again be dealt
+                /* Equation 4; boundary term will again be dealt
                    with below. This equation being driven to 0
                    ensures that the elasticity equation is met as
                    a constraint. */
@@ -1480,7 +1480,7 @@ namespace SAND
                                    (displacement_multiplier_phi_i_symmgrad *
                                     old_displacement_symmgrads[q_point])));
 
-                /* Equation 4: This equation sets the lower slack
+                /* Equation 5: This equation sets the lower slack
                    variable equal to the unfiltered density,
                    giving a minimum density of 0. */
                 cell_rhs(i) += fe_values.JxW(q_point) *
@@ -1488,7 +1488,7 @@ namespace SAND
                                 (old_unfiltered_density_values[q_point] -
                                  old_lower_slack_values[q_point]));
 
-                /* Equation 5: This equation sets the upper slack
+                /* Equation 6: This equation sets the upper slack
                    variable equal to one minus the unfiltered
                    density. */
                 cell_rhs(i) += fe_values.JxW(q_point) *
@@ -1496,7 +1496,7 @@ namespace SAND
                                 (1 - old_unfiltered_density_values[q_point] -
                                  old_upper_slack_values[q_point]));
 
-                /* Equation 6: This is the difference between the
+                /* Equation 7: This is the difference between the
                    density and the filter applied to the
                    unfiltered density.  This being driven to 0 by
                    the Newton steps ensures that the filter is
@@ -1506,7 +1506,7 @@ namespace SAND
                                 (old_density_values[q_point] -
                                  filtered_unfiltered_density_values[q_point]));
 
-                /* Equation 7: This along with equation 8 give the
+                /* Equation 8: This along with equation 9 give the
                    requirement that $s*z = \alpha$ for the barrier
                    size alpha, and gives complementary slackness
                    from KKT conditions when $\alpha$ goes to 0. */
@@ -1516,7 +1516,7 @@ namespace SAND
                    (old_lower_slack_multiplier_values[q_point] -
                     barrier_size / old_lower_slack_values[q_point]));
 
-                /* Equation 8 */
+                /* Equation 9 */
                 cell_rhs(i) +=
                   -1 * fe_values.JxW(q_point) *
                   (upper_slack_phi_i *

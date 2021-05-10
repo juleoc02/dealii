@@ -23,22 +23,22 @@ edge, as shown in the figure below. That said, symmetry was nice to look for in
 debugging, so we solved the problem on the whole domain.
 
 
-<img src="https://www.dealii.org/images/steps/developer/step-6.mbbgeometry.png"
+<img src="https://www.dealii.org/images/steps/developer/step-79.mbbgeometry.png"
 alt="The MBB problem domain and boundary conditions">
 
 
 Using the program discussed above, we find the minimum of the MBB Beam and the
 individual components of the solution look as follows:
 
-<img src="https://www.dealii.org/images/steps/developer/step-6.filtereddensity.png"
+<img src="https://www.dealii.org/images/steps/developer/step-79.filtereddensity.png"
  alt="Filtered Density Solution">
 
-<img src="https://www.dealii.org/images/steps/developer/step-6.unfiltereddensity.png"
+<img src="https://www.dealii.org/images/steps/developer/step-79.unfiltereddensity.png"
  alt="Unfiltered Density Solution">
 
 
 These pictures show that what we find here is in accordance with what one
-typically sees in other publications on the topic. Maybe more interestingly, the
+typically sees in other publications on the topic @cite Bendse2004. Maybe more interestingly, the
  result looks like a truss bridge (except that we apply the load at the top of
  the trusses, rather than the bottom as in real truss bridges, akin to a "deck
  truss" bridge), suggesting that the designs that have been used in bridge-
