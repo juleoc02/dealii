@@ -286,7 +286,9 @@ namespace SAND
     , filter_r(.251)
     , penalty_multiplier(1)
     , timer(std::cout, TimerOutput::summary, TimerOutput::wall_times)
-  {}
+  {
+       Assert(dim >1, ExcNotImplemented());
+  }
 
 
   // The first step then is to create the triangulation that matches
@@ -429,8 +431,8 @@ namespace SAND
     const std::vector<types::global_dof_index> dofs_per_block =
       DoFTools::count_dofs_per_fe_block(dof_handler, block_component);
 
-    const unsigned int                                n_p = dofs_per_block[0];
-    const unsigned int                                n_u = dofs_per_block[1];
+    const types::global_dof_index                       n_p = dofs_per_block[0];
+    const types::global_dof_index                       n_u = dofs_per_block[1];
     const std::vector<BlockVector<double>::size_type> block_sizes = {
       n_p, n_u, n_p, n_u, n_p, n_p, n_p, n_p, n_p};
 
@@ -576,22 +578,22 @@ namespace SAND
           {
             std::set<typename Triangulation<dim>::cell_iterator>
               cells_to_check_temp;
-            for (auto check_cell : cells_to_check)
+            for (const auto &check_cell : cells_to_check)
               {
-                for (unsigned int n = 0; n < GeometryInfo<dim>::faces_per_cell;
-                     ++n)
+                for (const auto &n : check_cell->face_indices())
                   {
                     if (!(check_cell->face(n)->at_boundary()))
                       {
+                        const auto &neighbor = check_cell->neighbor(n);
                         const double distance = cell->center().distance(
-                          check_cell->neighbor(n)->center());
+                          neighbor->center());
                         if ((distance < filter_r) &&
                             !(neighbor_ids.count(
-                              check_cell->neighbor(n)->active_cell_index())))
+                              neighbor->active_cell_index())))
                           {
-                            cells_to_check_temp.insert(check_cell->neighbor(n));
+                            cells_to_check_temp.insert(neighbor);
                             neighbor_ids.insert(
-                              check_cell->neighbor(n)->active_cell_index());
+                              neighbor->active_cell_index());
                           }
                       }
                   }
@@ -713,24 +715,24 @@ namespace SAND
               cells_to_check_temp;
             for (auto check_cell : cells_to_check)
               {
-                for (unsigned int n = 0; n < GeometryInfo<dim>::faces_per_cell;
-                     ++n)
+                for (const auto &n : check_cell->face_indices())
                   {
                     if (!(check_cell->face(n)->at_boundary()))
                       {
+                        const auto &neighbor = check_cell->neighbor(n);
                         const double distance = cell->center().distance(
-                          check_cell->neighbor(n)->center());
+                          neighbor->center());
                         if ((distance < filter_r) &&
                             !(neighbor_ids.count(
-                              check_cell->neighbor(n)->active_cell_index())))
+                              neighbor->active_cell_index())))
                           {
                             cells_to_check_temp.insert(check_cell->neighbor(n));
                             neighbor_ids.insert(
-                              check_cell->neighbor(n)->active_cell_index());
+                              neighbor->active_cell_index());
 
                             filter_matrix.add(
                               i,
-                              check_cell->neighbor(n)->active_cell_index(),
+                              neighbor->active_cell_index(),
                               filter_r - distance);
                           }
                       }
@@ -1407,7 +1409,8 @@ namespace SAND
     double step_size_z_high = 1;
     double step_size_s, step_size_z;
 
-    for (unsigned int k = 0; k < 50; ++k)
+    const int max_bisection_method_steps = 50;
+    for (unsigned int k = 0; k < max_bisection_method_steps; ++k)
       {
         step_size_s = (step_size_s_low + step_size_s_high) / 2;
         step_size_z = (step_size_z_low + step_size_z_high) / 2;
@@ -1459,9 +1462,10 @@ namespace SAND
   BlockVector<double> SANDTopOpt<dim>::calculate_test_rhs(
     const BlockVector<double> &test_solution) const
   {
+    // We first create a zero vector with size and blocking of system_rhs
     BlockVector<double> test_rhs;
     test_rhs.reinit(
-      system_rhs); /* a zero vector with size and blocking of system_rhs */
+      system_rhs);
 
     MappingQGeneric<dim>  mapping(1);
     const QGauss<dim>     quadrature_formula(fe.degree + 1);
@@ -1789,18 +1793,21 @@ namespace SAND
     // Start with computing the objective function:
     double objective_function_merit = 0;
     {
+      MappingQGeneric<dim> mapping(1);
       const QGauss<dim>     quadrature_formula(fe.degree + 1);
       const QGauss<dim - 1> face_quadrature_formula(fe.degree + 1);
-      FEValues<dim>         fe_values(fe,
-                              quadrature_formula,
-                              update_values | update_gradients |
-                                update_quadrature_points | update_JxW_values);
-      FEFaceValues<dim>     fe_face_values(fe,
-                                       face_quadrature_formula,
-                                       update_values |
-                                         update_quadrature_points |
-                                         update_normal_vectors |
-                                         update_JxW_values);
+      FEValues<dim>         fe_values(mapping,
+                                      fe,
+                                      quadrature_formula,
+                                      update_values | update_gradients |
+                                      update_quadrature_points | update_JxW_values);
+      FEFaceValues<dim>     fe_face_values(mapping,
+                                           fe,
+                                           face_quadrature_formula,
+                                           update_values |
+                                           update_quadrature_points |
+                                           update_normal_vectors |
+                                           update_JxW_values);
 
       const unsigned int n_face_q_points = face_quadrature_formula.size();
 
