@@ -35,7 +35,7 @@ measure of the potential energy stored in an object due to its deformation, but
 also works as a measure of total deformation over the structure.
 
 @f[
-  \text{Minimize  } \int_E \frac{1}{2}\boldsymbol{\sigma} : \boldsymbol{\varepsilon}
+  \text{Minimize  } \int_E \frac{1}{2}\boldsymbol{\sigma} : \boldsymbol{\varepsilon} d_V
 @f]
 @f[
   \text{subject to } \norm{E}\leq V_{\max}
@@ -91,10 +91,10 @@ optimization problem. Use of SIMP then turns the optimization problem into the
 following:
 
 @f[
-  \text{Minimize  } \int_\Omega \frac{1}{2}\boldsymbol{\sigma}(\rho) : \boldsymbol{\varepsilon}(\rho)
+  \text{Minimize  } \int_\Omega \frac{1}{2}\boldsymbol{\sigma}(\rho) : \boldsymbol{\varepsilon}(\rho) d_\Omega
 @f]
 @f[
-  \text{subject to } \int_\Omega \rho(x) = V_{\max},
+  \text{subject to } \int_\Omega \rho(x) d_\Omega= V_{\max},
 @f]
 @f[
   0<\rho_{\min}\leq \rho(x) \leq 1,
@@ -135,7 +135,7 @@ in which case the stress-strain tensor can be expressed in terms of the Lam\'{e}
 See step-8 for how this transformation works.
 
 Integrating the objective function by parts, along with using the elasticity
-equation constraint, gives a simplification of the objective problem as follows:
+equation constraint, gives the following simplification of the objective problem:
 
 Integration by parts of the objective function gives
 @f[
@@ -550,7 +550,8 @@ smaller values. At larger values, it is multiplied by a constant (around 0.6),
 and at lower values the barrier value is replaced by the barrier value raised
 to some exponent (around 1.2). This method has proven to be effective at keeping
  the subproblem solvable at large barrier values, while still allowing
- superlinear convergence at smaller barrier values.
+ superlinear convergence at smaller barrier values. In practice, this looks like
+ the following:
 @f[
   \alpha_{k+1} = \min\{\alpha_k^{1.2},0.6\alpha_k\}
 @f]
@@ -600,7 +601,7 @@ updated (by recommendation of Nocedal and Wright @cite Benson2002) as follows:
   p > \frac{\frac{1}{2} \mathbf{x}^T \cdot \mathbf{H} \cdot \mathbf{x} - \mathbf{x}^T \cdot \nabla f}{\norm{c_i}_{l_\infty}, i \in \mathcal{E}}
 @f]
 Where $\mathbf{H}$ is the Hessian of the objective function, $\mathbf{x}$ is a vector of our
-decision variables, $f$ is the objective function, and $c_i$ is the error on a
+decision (primal) variables, $f$ is the objective function, and $c_i$ is the error on a
 current equality constraint.
 
 Our use of this method is partially due to already having most of the necessary

@@ -372,9 +372,7 @@ namespace SAND
                 // right vertex:
                 if (std::fabs(center(1) - 0) < 1e-12)
                   {
-                    for (unsigned int vertex_number = 0;
-                         vertex_number < GeometryInfo<dim>::vertices_per_cell;
-                         ++vertex_number)
+                    for (const auto &vertex_number : cell->vertex_indices())
                       {
                         const auto vert = cell->vertex(vertex_number);
 
@@ -539,9 +537,9 @@ namespace SAND
       density_dofs.nth_index_in_set(density_dofs.n_elements() - 1);
     constraints.clear();
     constraints.add_line(last_density_dof);
-    for (unsigned int i = 1; i < density_dofs.n_elements(); ++i)
+    for (unsigned int i = 0; i < density_dofs.n_elements() - 1; ++i)
       constraints.add_entry(last_density_dof,
-                            density_dofs.nth_index_in_set(i - 1),
+                            density_dofs.nth_index_in_set(i),
                             -1);
     constraints.set_inhomogeneity(last_density_dof, 0);
 
@@ -605,23 +603,14 @@ namespace SAND
 
     {
       using namespace SolutionBlocks;
+      nonlinear_solution.block(density).add(density_ratio);
+      nonlinear_solution.block(unfiltered_density).add(density_ratio);
+      nonlinear_solution.block(unfiltered_density_multiplier).add(density_ratio);
+      nonlinear_solution.block(density_lower_slack).add(density_ratio);
+      nonlinear_solution.block(density_lower_slack_multiplier).add(50);
+      nonlinear_solution.block(density_upper_slack).add(1-density_ratio);
+      nonlinear_solution.block(density_upper_slack_multiplier).add(50);
 
-      for (unsigned int k = 0; k < n_u; ++k)
-        {
-          nonlinear_solution.block(displacement)[k]            = 0;
-          nonlinear_solution.block(displacement_multiplier)[k] = 0;
-        }
-      for (unsigned int k = 0; k < n_p; ++k)
-        {
-          nonlinear_solution.block(density)[k]            = density_ratio;
-          nonlinear_solution.block(unfiltered_density)[k] = density_ratio;
-          nonlinear_solution.block(unfiltered_density_multiplier)[k] =
-            density_ratio;
-          nonlinear_solution.block(density_lower_slack)[k] = density_ratio;
-          nonlinear_solution.block(density_lower_slack_multiplier)[k] = 50;
-          nonlinear_solution.block(density_upper_slack)[k] = 1 - density_ratio;
-          nonlinear_solution.block(density_upper_slack_multiplier)[k] = 50;
-        }
     }
   }
 
