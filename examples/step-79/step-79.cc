@@ -221,6 +221,8 @@ namespace SAND
 
     void write_as_stl();
 
+    std::set<typename Triangulation<dim>::cell_iterator> find_relevant_neighbors(typename Triangulation<dim>::cell_iterator cell);
+
 
     // Most of the member variables are also standard. There are,
     // however, a number of variables that are specifically related
@@ -566,58 +568,15 @@ namespace SAND
     for (const auto &cell : dof_handler.active_cell_iterators())
       {
         const unsigned int i = cell->active_cell_index();
-
-        std::set<unsigned int>                               neighbor_ids;
-        std::set<typename Triangulation<dim>::cell_iterator> cells_to_check;
-
-        neighbor_ids.insert(i);
-        cells_to_check.insert(cell);
-
-        unsigned int n_neighbors = 1;
-        while (true)
-          {
-            std::set<typename Triangulation<dim>::cell_iterator>
-              cells_to_check_temp;
-            for (const auto &check_cell : cells_to_check)
-              {
-                for (const auto &n : check_cell->face_indices())
-                  {
-                    if (!(check_cell->face(n)->at_boundary()))
-                      {
-                        const auto &neighbor = check_cell->neighbor(n);
-                        const double distance = cell->center().distance(
-                          neighbor->center());
-                        if ((distance < filter_r) &&
-                            !(neighbor_ids.count(
-                              neighbor->active_cell_index())))
-                          {
-                            cells_to_check_temp.insert(neighbor);
-                            neighbor_ids.insert(
-                              neighbor->active_cell_index());
-                          }
-                      }
-                  }
-              }
-
-            if (neighbor_ids.size() == n_neighbors)
-              break;
-            else
-              {
-                cells_to_check = cells_to_check_temp;
-                n_neighbors    = neighbor_ids.size();
-              }
-          }
-
-        for (const auto j : neighbor_ids)
-          {
-            dsp
-              .block(SolutionBlocks::unfiltered_density,
-                     SolutionBlocks::unfiltered_density_multiplier)
-              .add(i, j);
-            dsp
-              .block(SolutionBlocks::unfiltered_density_multiplier,
-                     SolutionBlocks::unfiltered_density)
-              .add(i, j);
+        for (const auto &check_cell : find_relevant_neighbors(cell)) {
+            const double distance = cell->center().distance(check_cell->center());
+            if (distance < filter_r)
+            {
+                dsp.block(SolutionBlocks::unfiltered_density, SolutionBlocks::unfiltered_density_multiplier)
+                  .add(i, check_cell->active_cell_index());
+                dsp.block(SolutionBlocks::unfiltered_density_multiplier,SolutionBlocks::unfiltered_density)
+                  .add(i, check_cell->active_cell_index());
+            }
           }
       }
 
@@ -697,54 +656,15 @@ namespace SAND
     // these loops to actually compute the necessary values of the
     // matrix entries:
 
-    for (const auto &cell : dof_handler.active_cell_iterators())
+      for (const auto &cell : dof_handler.active_cell_iterators())
       {
-        const unsigned int i = cell->active_cell_index();
-
-        std::set<unsigned int>                               neighbor_ids;
-        std::set<typename Triangulation<dim>::cell_iterator> cells_to_check;
-
-        neighbor_ids.insert(i);
-        cells_to_check.insert(cell);
-
-        unsigned int n_neighbors = 1;
-        filter_matrix.add(i, i, filter_r);
-        while (true)
-          {
-            std::set<typename Triangulation<dim>::cell_iterator>
-              cells_to_check_temp;
-            for (auto check_cell : cells_to_check)
+          const unsigned int i = cell->active_cell_index();
+          for (const auto &check_cell : find_relevant_neighbors(cell)) {
+              const double distance = cell->center().distance(check_cell->center());
+              if (distance < filter_r)
               {
-                for (const auto &n : check_cell->face_indices())
-                  {
-                    if (!(check_cell->face(n)->at_boundary()))
-                      {
-                        const auto &neighbor = check_cell->neighbor(n);
-                        const double distance = cell->center().distance(
-                          neighbor->center());
-                        if ((distance < filter_r) &&
-                            !(neighbor_ids.count(
-                              neighbor->active_cell_index())))
-                          {
-                            cells_to_check_temp.insert(check_cell->neighbor(n));
-                            neighbor_ids.insert(
-                              neighbor->active_cell_index());
-
-                            filter_matrix.add(
-                              i,
-                              neighbor->active_cell_index(),
-                              filter_r - distance);
-                          }
-                      }
-                  }
-              }
-
-            if (neighbor_ids.size() == n_neighbors)
-              break;
-            else
-              {
-                cells_to_check = cells_to_check_temp;
-                n_neighbors    = neighbor_ids.size();
+                  filter_matrix.add(i, check_cell->active_cell_index(), filter_r - distance);
+//
               }
           }
       }
@@ -765,10 +685,51 @@ namespace SAND
       }
   }
 
+    //This function is used for building the filter matrix. We create a set of
+    //all the cell iterators within a certain radius of the cell that is input.
+    //These are the neighboring cells that will be relevant for the filter.
+    template <int dim>
+    std::set<typename Triangulation<dim>::cell_iterator>
+    SANDTopOpt<dim>::find_relevant_neighbors(typename Triangulation<dim>::cell_iterator cell)
+    {
+        std::set<unsigned int>                               neighbor_ids;
+        std::set<typename Triangulation<dim>::cell_iterator> cells_to_check;
 
-  // @sect3{Assembling the Newton matrix}
+        neighbor_ids.insert(cell->active_cell_index());
+        cells_to_check.insert(cell);
 
-  // Whereas the previous function built a matrix that is the same as
+        bool new_neighbors_found;
+        do
+        {
+            new_neighbors_found = false;
+            for (const auto &check_cell : std::vector<typename Triangulation<dim>::cell_iterator>(cells_to_check.begin(), cells_to_check.end()))
+            {
+                for (const auto &n : check_cell->face_indices())
+                {
+                    if (!(check_cell->face(n)->at_boundary()))
+                    {
+                        const auto &neighbor = check_cell->neighbor(n);
+                        const double distance = cell->center().distance(
+                                neighbor->center());
+                        if ((distance < filter_r) &&
+                            !(neighbor_ids.count(
+                                    neighbor->active_cell_index())))
+                        {
+                            cells_to_check.insert(neighbor);
+                            neighbor_ids.insert(
+                                    neighbor->active_cell_index());
+                            new_neighbors_found = true;
+                        }
+                    }
+                }
+            }
+        } while (new_neighbors_found);
+        return cells_to_check;
+    }
+
+    // @sect3{Assembling the Newton matrix}
+
+  // Whereas the setup_filter_matrix function built a matrix that is the same as
   // long as the mesh does not change (which we don't do anyway in
   // this program), the next function builds the matrix to be solved
   // in each iteration. This is where the magic happens. The components
@@ -806,7 +767,6 @@ namespace SAND
 
     const unsigned int dofs_per_cell   = fe.dofs_per_cell;
     const unsigned int n_q_points      = quadrature_formula.size();
-    const unsigned int n_face_q_points = face_quadrature_formula.size();
 
     FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
     Vector<double>     dummy_cell_rhs(dofs_per_cell);
