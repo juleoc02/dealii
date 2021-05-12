@@ -226,7 +226,7 @@ namespace SAND
     void write_as_stl();
 
     std::set<typename Triangulation<dim>::cell_iterator>
-    find_relevant_neighbors(typename Triangulation<dim>::cell_iterator cell);
+    find_relevant_neighbors(typename Triangulation<dim>::cell_iterator cell) const;
 
 
     // Most of the member variables are also standard. There are,
@@ -694,7 +694,7 @@ namespace SAND
   template <int dim>
   std::set<typename Triangulation<dim>::cell_iterator>
   SANDTopOpt<dim>::find_relevant_neighbors(
-    typename Triangulation<dim>::cell_iterator cell)
+    typename Triangulation<dim>::cell_iterator cell) const
   {
     std::set<unsigned int>                               neighbor_ids;
     std::set<typename Triangulation<dim>::cell_iterator> cells_to_check;
