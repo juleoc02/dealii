@@ -15,19 +15,20 @@ the bridge are on rollers that allow these points to move horizontally but not
 vertically, and so that the displacement in response to the vertical force in
 the center is minimal.
 
-While the total volume of the domain is 6, 3 units of material are allowed for
+While the total volume of the domain is 6 units, 3 units of material are allowed for
 the structure. Because of the symmetry of the problem, it could be posed on a
 rectangle of width 3 and height 1 by cutting the original domain in half, and
 using zero Dirichlet boundary conditions in the $x$ direction along the cut
-edge, as shown in the figure below. That said, symmetry was nice to look for in
-debugging, so we solved the problem on the whole domain.
+edge, as shown in the figure below. That said, symmetry of the solution is a
+good indicator that the program is working as expected, so we solved the problem
+on the whole domain.
 
 
 <img src="https://www.dealii.org/images/steps/developer/step-79.mbbgeometry.png"
 alt="The MBB problem domain and boundary conditions">
 
 
-Using the program discussed above, we find the minimum of the MBB Beam and the
+Using the program discussed above, we find the minimum volume of the MBB Beam and the
 individual components of the solution look as follows:
 
 <img src="https://www.dealii.org/images/steps/developer/step-79.filtereddensity.png"
@@ -48,7 +49,7 @@ typically sees in other publications on the topic @cite Bendse2004. Maybe more i
 
 <h4>Possibilities for extensions</h4>
 
-The results shown above took  around 75 iterations to find, which is quite
+The results shown above took around 75 iterations to find, which is quite
 concerning given the expense in solving the large linear systems in each
 iteration. Looking at the evolution, it does look as though the convergence has
 moments of happening quickly and moments of happening slowly. We believe this to

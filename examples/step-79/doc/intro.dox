@@ -35,7 +35,7 @@ measure of the potential energy stored in an object due to its deformation, but
 also works as a measure of total deformation over the structure.
 
 @f[
-  \text{Minimize  } \int_E \frac{1}{2}\boldsymbol{\sigma} : \boldsymbol{\varepsilon} d_V
+  \text{Minimize  } \int_E \frac{1}{2}\boldsymbol{\sigma} : \boldsymbol{\varepsilon} dV
 @f]
 @f[
   \text{subject to } \norm{E}\leq V_{\max}
@@ -103,7 +103,7 @@ following:
 
   \nabla \cdot \boldsymbol{\sigma}(\rho) + \mathbf{F} = 0 \quad \text{on } \Omega
 @f]
-The final constraint, the balance of linear momentum given by the elasticity equation,
+The final constraint, the balance of linear momentum (sometimes referred to as the elasticity equation),
  gives a method for finding $\boldsymbol{\sigma}$ and $\boldsymbol{\varepsilon}$ given the density $\rho$.
 
 <h3>Elasticity Equation</h3>
@@ -111,13 +111,13 @@ The elasticity equation in the time independent limit reads
 @f[
   \nabla \cdot \boldsymbol{\sigma} + \mathbf{F} = \mathbf{0} .
 @f]
-In the situations we will care about, we will assume that the medium is linear
+In the situations we will care about, we will assume that the medium has a linear material response
 and in that case, we have that
 @f[
   \boldsymbol{\sigma} = \mathbf{C} : \boldsymbol{\varepsilon} = \rho^p \mathbf{C}_0 : \boldsymbol{\varepsilon}(\mathbf{u})
-   = \rho^p \mathbf{C}_0 : \left[\frac{1}{2} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) \right],
+   = \rho^p \mathbf{C}_0 : \left[\frac{1}{2} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) \right] .
 @f]
-and in everything we will do below, we will always consider the displacement
+In everything we will do below, we will always consider the displacement
 field $\mathbf{u}$ as the only solution variable, rather than considering
 $\mathbf{u}$ and $\boldsymbol{\sigma}$ as solution variables (as is done in mixed
 formulations).
@@ -125,38 +125,32 @@ formulations).
 Furthermore, we will make the assumption that the material is linear isotropic,
 in which case the stress-strain tensor can be expressed in terms of the Lam\'{e}
  parameters $\lambda,\mu$ such that
-@f[
-  \boldsymbol{\sigma} = \rho^p (\lambda \text{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2 \mu \boldsymbol{\varepsilon})
-@f]
-@f[
-  \sigma_{i,j} = \rho^p (\lambda \varepsilon_{k,k} \delta_{i,j}
-  + 2 \mu \varepsilon_{i,j})
-@f]
+@f{align}
+  \boldsymbol{\sigma} &= \rho^p (\lambda \text{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2 \mu \boldsymbol{\varepsilon}) ,
+\\ \sigma_{i,j} &= \rho^p (\lambda \varepsilon_{k,k} \delta_{i,j}
+  + 2 \mu \varepsilon_{i,j}) .
+@f}
 See step-8 for how this transformation works.
 
-Integrating the objective function by parts, along with using the elasticity
-equation constraint, gives the following simplification of the objective problem:
-
-Integration by parts of the objective function gives
+Integrating the objective function by parts gives
 @f[
   \int_\Omega \boldsymbol{\sigma}(\rho) : (\nabla \mathbf{u} + (\nabla \mathbf{u}))^T  d\Omega+
   \int_\Omega (\nabla \cdot \boldsymbol{\sigma}(\rho)) \cdot \mathbf{u}  d\Omega=
-  \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega
+  \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega ,
 @f]
-
-The linear elasticity equation can then be substituted into the objective function, giving
+into which the linear elasticity equation can then be substituted, giving
 @f[
   \int_\Omega \boldsymbol{\sigma}(\rho) : (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) d\Omega =
   \int_\Omega \mathbf{F}\cdot \mathbf{u} d\Omega+
-  \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega
+  \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega .
 @f]
-
-Because we are assuming no body forces, this simplifies all the way to
-
+Because we are assuming no body forces, this simplifies further to
 @f[
   \int_\Omega \boldsymbol{\sigma}(\rho) : (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) d\Omega
-  = \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega
+  = \int_{\partial \Omega} \mathbf{t} \cdot \mathbf{u} d\partial\Omega,
 @f]
+which is the final form of the governing equation that we'll be considering
+from this point forward.
 
 <h3>Making the solution mesh-independent</h3>
 
