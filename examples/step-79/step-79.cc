@@ -882,7 +882,7 @@ namespace SAND
         for (const auto q_point : fe_values.quadrature_point_indices())
           {
             // We need several more values corresponding to the test functions
-            // coming from the first derivatives taken from the lagrangian,
+            // coming from the first derivatives taken from the Lagrangian,
             // that is the $d_{\bullet}$ functions. These are calculated here:
             for (const auto i : fe_values.dof_indices())
               {
@@ -925,8 +925,7 @@ namespace SAND
                 for (const auto j : fe_values.dof_indices())
                   {
                     // Finally, we need values that come from the second round
-                    // of
-                    // derivatives taken from the lagrangian,
+                    // of derivatives taken from the Lagrangian,
                     // the $c_{\bullet}$ functions. These are calculated here:
                     const SymmetricTensor<2, dim> displacement_phi_j_symmgrad =
                       fe_values[displacements<dim>].symmetric_gradient(j,
@@ -1458,10 +1457,10 @@ namespace SAND
                     i, q_point);
 
                 /* Equation 1: This equation, along with equations
-                   2 and 3, are the variational derivatives of the
-                   lagrangian with respect to the decision
-                   variables - the density, displacement, and
-                   unfiltered density. */
+                 * 2 and 3, are the variational derivatives of the
+                 * Lagrangian with respect to the decision
+                 * variables - the density, displacement, and
+                 * unfiltered density. */
                 cell_rhs(i) +=
                   -1 * fe_values.JxW(q_point) *
                   (density_penalty_exponent *
@@ -1503,9 +1502,9 @@ namespace SAND
 
 
                 /* Equation 4; boundary term will again be dealt
-                   with below. This equation being driven to 0
-                   ensures that the elasticity equation is met as
-                   a constraint. */
+                 * with below. This equation being driven to 0
+                 * ensures that the elasticity equation is met as
+                 * a constraint. */
                 cell_rhs(i) += -1 * fe_values.JxW(q_point) *
                                (std::pow(old_density_values[q_point],
                                          density_penalty_exponent) *
@@ -1517,35 +1516,35 @@ namespace SAND
                                     old_displacement_symmgrads[q_point])));
 
                 /* Equation 5: This equation sets the lower slack
-                   variable equal to the unfiltered density,
-                   giving a minimum density of 0. */
+                 * variable equal to the unfiltered density,
+                 * giving a minimum density of 0. */
                 cell_rhs(i) += fe_values.JxW(q_point) *
                                (lower_slack_multiplier_phi_i *
                                 (old_unfiltered_density_values[q_point] -
                                  old_lower_slack_values[q_point]));
 
                 /* Equation 6: This equation sets the upper slack
-                   variable equal to one minus the unfiltered
-                   density. */
+                 * variable equal to one minus the unfiltered
+                 * density. */
                 cell_rhs(i) += fe_values.JxW(q_point) *
                                (upper_slack_multiplier_phi_i *
                                 (1 - old_unfiltered_density_values[q_point] -
                                  old_upper_slack_values[q_point]));
 
                 /* Equation 7: This is the difference between the
-                   density and the filter applied to the
-                   unfiltered density.  This being driven to 0 by
-                   the Newton steps ensures that the filter is
-                   applied correctly. */
+                 * density and the filter applied to the
+                 * unfiltered density. This being driven to 0 by
+                 * the Newton steps ensures that the filter is
+                 * applied correctly. */
                 cell_rhs(i) += fe_values.JxW(q_point) *
                                (unfiltered_density_multiplier_phi_i *
                                 (old_density_values[q_point] -
                                  filtered_unfiltered_density_values[q_point]));
 
                 /* Equation 8: This along with equation 9 give the
-                   requirement that $s*z = \alpha$ for the barrier
-                   size alpha, and gives complementary slackness
-                   from KKT conditions when $\alpha$ goes to 0. */
+                 * requirement that $s*z = \alpha$ for the barrier
+                 * size alpha, and gives complementary slackness
+                 * from KKT conditions when $\alpha$ goes to 0. */
                 cell_rhs(i) +=
                   -1 * fe_values.JxW(q_point) *
                   (lower_slack_phi_i *
